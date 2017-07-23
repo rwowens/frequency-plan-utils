@@ -1,0 +1,14 @@
+{
+	"name" : "AC8UJ Frequency Plan Utilities",
+	"require" : {
+		"google/apiclient" : "^2.0"
+	},
+	"require-dev" : {
+		"phing/phing" : "2.*"
+	},
+	"authors" : [{
+			"name" : "Ryan Owens"
+		}
+	],
+	"license" : "Apache License 2.0"
+}

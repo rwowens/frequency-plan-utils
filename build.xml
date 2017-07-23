@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="RdtProcessor" default="package">
+	<property file="build.properties"/>
+	<property name="dist.dir" value="dist"/>
+	<property name="dist.zip" value="dist.zip"/>
+
+	<target name="clean">
+		<delete dir="${dist.dir}"/>
+		<delete dir="${dist.zip}"/>
+	</target>
+
+	<target name="package">
+		<mkdir dir="${dist.dir}"/>
+		<copy file="composer.json" tofile="${dist.dir}/composer.json"/>
+		<copy file="composer.lock" tofile="${dist.dir}/composer.lock"/>
+		<composer command="install">
+			<arg value="--working-dir"/>
+			<arg value="${dist.dir}"/>
+			<arg value="--prefer-dist"/>
+			<arg value="--no-dev"/>
+			<arg value="--verbose"/>
+		</composer>
+		<delete file="${dist.dir}/composer.json"/>
+		<delete file="${dist.dir}/composer.lock"/>
+		<echo file="codeplugs/.htaccess">deny from all</echo>
+		<echo file="config/.htaccess">deny from all</echo>
+		<echo file="includes/.htaccess">deny from all</echo>
+		<echo file="vendor/.htaccess">deny from all</echo>
+		<copy todir="${dist.dir}">
+			<fileset dir=".">
+				<include name="*.php"/>
+				<include name="codeplugs/**"/>
+				<include name="config/.htaccess"/>
+				<include name="config/sheets-example.json"/>
+				<include name="includes/**"/>
+				<include name="vendor/**"/>
+			</fileset>
+		</copy>
+		<zip destfile="${dist.zip}">
+			<fileset dir="${dist.dir}">
+				<include name="**/**"/>
+			</fileset>
+		</zip>
+	</target>
+</project>

@@ -1,0 +1,22 @@
+{
+	"DMR base": {
+		"dmrblank": {
+			"id": "1tCUlVulWI9S5J5JLnMpZ8HfnIgRHDBNeMqMwMopcdco",
+			"name": "Blank DMR Base"
+		},
+		"dmrblank2": {
+			"id": "1tCUlVulWI9S5J5JLnMpZ8HfnIgRHDBNeMqMwMopcdco",
+			"name": "Second blank DMR Base"
+		}
+	},
+	"Frequency plan": {
+		"freqplanblank": {
+			"id": "1vAX6axSnteVr4OVrdeQqv0t4S9gp8kQcCTlqI13xnic",
+			"name": "Blank Frequency Plan"
+		},
+		"freqplanblank2": {
+			"id": "1vAX6axSnteVr4OVrdeQqv0t4S9gp8kQcCTlqI13xnic",
+			"name": "Second blank Frequency Plan"
+		}
+	}
+}

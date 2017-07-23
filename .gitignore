@@ -1,0 +1,8 @@
+vendor/*
+composer.phar
+dist/*
+dist.zip
+config/google_creds.json
+.buildpath
+.project
+.settings/*
