@@ -9,9 +9,6 @@
 <?php
 	define('JSON_FREQ_PLAN_ELEMENT', "Frequency plan");
 	define('JSON_DMR_BASE_ELEMENT', "DMR base");
-
-	$sheetsFile = file_get_contents(__DIR__ . "/config/sheets.json");
-	$sheetsData = json_decode($sheetsFile, true);
 ?>
 <body>
 <div class="container">
@@ -19,6 +16,13 @@
 		<h1>Frequency Plan Utilities</h1>
 	</div>
 <?php 
+	if (file_exists(__DIR__ . "/config/sheets.json")) {
+		$sheetsFile = file_get_contents(__DIR__ . "/config/sheets.json");
+		$sheetsData = json_decode($sheetsFile, true);
+	} else {
+		$sheetsData = [];
+	}
+
 	if (!isset($sheetsData[JSON_FREQ_PLAN_ELEMENT]) && !isset($sheetsData[JSON_DMR_BASE_ELEMENT])) {
 ?>
 	<div class="row">
