@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../vendor/autoload.php';
+
 function getGoogleClient($readonly = true) {
 	putenv('GOOGLE_APPLICATION_CREDENTIALS=config/google_creds.json');
 	define('APPLICATION_NAME', 'AC8UJ File Creator');
