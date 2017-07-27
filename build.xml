@@ -11,6 +11,9 @@
 
 	<target name="prep-dist-dir">
 		<mkdir dir="${dist.dir}"/>
+		<mkdir dir="${dist.dir}/codeplugs"/>
+		<mkdir dir="${dist.dir}/config"/>
+		<mkdir dir="${dist.dir}/includes"/>
 	</target>
 
 	<target name="prep-dist-vendor" depends="prep-dist-dir">
@@ -25,22 +28,21 @@
 		</composer>
 		<delete file="${dist.dir}/composer.json"/>
 		<delete file="${dist.dir}/composer.lock"/>
+		<echo file="${dist.dir}/vendor/.htaccess">deny from all</echo>
 	</target>
 
 	<target name="prep-dist-app" depends="prep-dist-dir">
-		<echo file="codeplugs/.htaccess">deny from all</echo>
-		<echo file="config/.htaccess">deny from all</echo>
-		<echo file="includes/.htaccess">deny from all</echo>
-		<echo file="vendor/.htaccess">deny from all</echo>
 		<copy todir="${dist.dir}">
 			<fileset dir=".">
 				<include name="*.php"/>
 				<include name="codeplugs/**"/>
-				<include name="config/.htaccess"/>
 				<include name="config/sheets-example.json"/>
 				<include name="includes/**"/>
 			</fileset>
 		</copy>
+		<echo file="${dist.dir}/codeplugs/.htaccess">deny from all</echo>
+		<echo file="${dist.dir}/config/.htaccess">deny from all</echo>
+		<echo file="${dist.dir}/includes/.htaccess">deny from all</echo>
 	</target>
 
 	<target name="prep-dist-zip" depends="prep-dist-app">
