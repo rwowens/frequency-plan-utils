@@ -159,6 +159,16 @@ function findContactNameFromOriginalIndex(&$contactArr, $origIndex) {
 	return NULL;
 }
 
+function findTextMessageIndex(&$textArr, $textMsg) {
+	$rowNum = 1;
+	foreach ($textArr as $text) {
+		if ($text->getText() == $textMsg) {
+			return $rowNum;
+		}
+		$rowNum++;
+	}
+}
+
 function findChannelNameFromOriginalIndex(&$channelArr, $origIndex) {
 	foreach ($channelArr as $channel) {
 		if ($channel->getOriginalIndex() == $origIndex) {
@@ -811,36 +821,42 @@ function lookupDocumentId($docName) {
 
 function retrieveSpreadsheetData($baseSpreadsheetId, $personalSpreadsheetId) {
 	$gClient = getGoogleClient();
-	$service = new Google_Service_Sheets($gClient);
-	$baseSheetValues = readAllDataFromSpreadsheet($service, $baseSpreadsheetId);
-	$personalSheetValues = array();
-	if ($personalSpreadsheetId != null) {
-		try {
-			$personalSheetValues = readAllDataFromSpreadsheet($service, $personalSpreadsheetId);
-		} catch (Google_Service_Exception $gse) {
-			addError("Unable to read personal spreadsheet file with ID ".$personalSpreadsheetId);
+	try {
+		$service = new Google_Service_Sheets($gClient);
+		$baseSheetValues = readAllDataFromSpreadsheet($service, $baseSpreadsheetId);
+		$personalSheetValues = array();
+		if ($personalSpreadsheetId != null) {
+			try {
+				$personalSheetValues = readAllDataFromSpreadsheet($service, $personalSpreadsheetId);
+			} catch (Google_Service_Exception $gse) {
+				addError("Unable to read personal spreadsheet file with ID ".$personalSpreadsheetId);
+			}
 		}
+		$genSettings = readGeneralSettings($baseSheetValues[DATA_KEY_GENERAL_SETTINGS],
+				array_key_exists(DATA_KEY_GENERAL_SETTINGS, $personalSheetValues) ? $personalSheetValues[DATA_KEY_GENERAL_SETTINGS] : null);
+		$menuItems = readMenuItems($baseSheetValues[DATA_KEY_MENU_ITEMS],
+				array_key_exists(DATA_KEY_MENU_ITEMS, $personalSheetValues) ? $personalSheetValues[DATA_KEY_MENU_ITEMS] : null);
+		$buttonDefinitions = readButtonDefinitions($baseSheetValues[DATA_KEY_BUTTON_DEFINITIONS],
+				array_key_exists(DATA_KEY_BUTTON_DEFINITIONS, $personalSheetValues) ? $personalSheetValues[DATA_KEY_BUTTON_DEFINITIONS] : null);
+		$contactArr = readContactList($baseSheetValues[DATA_KEY_CONTACTS],
+				array_key_exists(DATA_KEY_CONTACTS, $personalSheetValues) ? $personalSheetValues[DATA_KEY_CONTACTS] : null);
+		$groupListArr = readRxGroupLists($baseSheetValues[DATA_KEY_RX_GROUP_LISTS],
+				array_key_exists(DATA_KEY_RX_GROUP_LISTS, $personalSheetValues) ? $personalSheetValues[DATA_KEY_RX_GROUP_LISTS] : null);
+		$channelArr = readChannelList($baseSheetValues[DATA_KEY_CHANNELS], $baseSheetValues[DATA_KEY_CHANNEL_COLUMNS],
+				array_key_exists(DATA_KEY_CHANNELS, $personalSheetValues) ? $personalSheetValues[DATA_KEY_CHANNELS] : null,
+				array_key_exists(DATA_KEY_CHANNEL_COLUMNS, $personalSheetValues) ? $personalSheetValues[DATA_KEY_CHANNEL_COLUMNS] : null);
+		$scanListArr = readScanLists($baseSheetValues[DATA_KEY_SCAN_LISTS],
+				array_key_exists(DATA_KEY_SCAN_LISTS, $personalSheetValues) ? $personalSheetValues[DATA_KEY_SCAN_LISTS] : null);
+		$zoneArr = readZoneInfoList($baseSheetValues[DATA_KEY_ZONES],
+				array_key_exists(DATA_KEY_ZONES, $personalSheetValues) ? $personalSheetValues[DATA_KEY_ZONES] : null);
+		$textMessageArr = readTextMessages($baseSheetValues[DATA_KEY_TEXT],
+				array_key_exists(DATA_KEY_TEXT, $personalSheetValues) ? $personalSheetValues[DATA_KEY_TEXT] : null);
+	
+		return new SpreadsheetData($genSettings, $menuItems, $buttonDefinitions, $channelArr, $contactArr, $groupListArr, $scanListArr, $textMessageArr, $zoneArr);
+	} catch (Google_Service_Exception $e) {
+		addError("Failed to retrieve spreadsheet data - check server log for details");
+		error_log($e->getMessage());
+		return null;
 	}
-	$genSettings = readGeneralSettings($baseSheetValues[DATA_KEY_GENERAL_SETTINGS],
-			array_key_exists(DATA_KEY_GENERAL_SETTINGS, $personalSheetValues) ? $personalSheetValues[DATA_KEY_GENERAL_SETTINGS] : null);
-	$menuItems = readMenuItems($baseSheetValues[DATA_KEY_MENU_ITEMS],
-			array_key_exists(DATA_KEY_MENU_ITEMS, $personalSheetValues) ? $personalSheetValues[DATA_KEY_MENU_ITEMS] : null);
-	$buttonDefinitions = readButtonDefinitions($baseSheetValues[DATA_KEY_BUTTON_DEFINITIONS],
-			array_key_exists(DATA_KEY_BUTTON_DEFINITIONS, $personalSheetValues) ? $personalSheetValues[DATA_KEY_BUTTON_DEFINITIONS] : null);
-	$contactArr = readContactList($baseSheetValues[DATA_KEY_CONTACTS],
-			array_key_exists(DATA_KEY_CONTACTS, $personalSheetValues) ? $personalSheetValues[DATA_KEY_CONTACTS] : null);
-	$groupListArr = readRxGroupLists($baseSheetValues[DATA_KEY_RX_GROUP_LISTS],
-			array_key_exists(DATA_KEY_RX_GROUP_LISTS, $personalSheetValues) ? $personalSheetValues[DATA_KEY_RX_GROUP_LISTS] : null);
-	$channelArr = readChannelList($baseSheetValues[DATA_KEY_CHANNELS], $baseSheetValues[DATA_KEY_CHANNEL_COLUMNS],
-			array_key_exists(DATA_KEY_CHANNELS, $personalSheetValues) ? $personalSheetValues[DATA_KEY_CHANNELS] : null,
-			array_key_exists(DATA_KEY_CHANNEL_COLUMNS, $personalSheetValues) ? $personalSheetValues[DATA_KEY_CHANNEL_COLUMNS] : null);
-	$scanListArr = readScanLists($baseSheetValues[DATA_KEY_SCAN_LISTS],
-			array_key_exists(DATA_KEY_SCAN_LISTS, $personalSheetValues) ? $personalSheetValues[DATA_KEY_SCAN_LISTS] : null);
-	$zoneArr = readZoneInfoList($baseSheetValues[DATA_KEY_ZONES],
-			array_key_exists(DATA_KEY_ZONES, $personalSheetValues) ? $personalSheetValues[DATA_KEY_ZONES] : null);
-	$textMessageArr = readTextMessages($baseSheetValues[DATA_KEY_TEXT],
-			array_key_exists(DATA_KEY_TEXT, $personalSheetValues) ? $personalSheetValues[DATA_KEY_TEXT] : null);
-
-	return new SpreadsheetData($genSettings, $menuItems, $buttonDefinitions, $channelArr, $contactArr, $groupListArr, $scanListArr, $textMessageArr, $zoneArr);
 }
 ?>

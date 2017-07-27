@@ -139,7 +139,7 @@ class ButtonsDefinitions {
 	
 /*
 
-0x2336 = long press (range of 0x04 - 0x0F)
+0x2326 = long press (range of 0x04 - 0x0F)
 0x2327 Side button 1 short press:	0x00 = Unassigned (default)
 									0x01 = All Alert Tones On/Off
 									0x02 = Emergency On
@@ -163,7 +163,7 @@ class ButtonsDefinitions {
 									0x1F = Lone Work On/Off
 0x2328 Side button 1 long press: same as above
 0x2329 Side button 2 short press: same as above
-0x233A Side button 2 long press: same as above
+0x232A Side button 2 long press: same as above
 
 0x2339 One Touch Access #1 Digital Text=D1; Digital Call=D0; Analog DTMF-1=E8; Analog DTMF-2=E9; Analog DTMF-3=EA; DTMF-4=EB; None=C1
 0x233A 1 byte text message #

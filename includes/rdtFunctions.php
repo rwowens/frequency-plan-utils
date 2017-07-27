@@ -259,6 +259,127 @@ function writeRDTMenuItems(&$fh, &$menuItems) {
 	fwrite($fh, $data);
 }
 
+function convertButtonFunctionToCodeNum($btnFunction) {
+	if ($btnFunction == null) {
+		return 0x00;
+	}
+
+	switch ($btnFunction) {
+		case "All Alert Tones On/Off": return 0x01;
+		case "Emergency On": return 0x02;
+		case "Emergency Off": return 0x03;
+		case "High/Low Power": return 0x04;
+		case "Monitor": return 0x05;
+		case "Nuisance Delete": return 0x06;
+		case "One Touch Access 1": return 0x07;
+		case "One Touch Access 2": return 0x08;
+		case "One Touch Access 3": return 0x09;
+		case "One Touch Access 4": return 0x0A;
+		case "One Touch Access 5": return 0x0B;
+		case "One Touch Access 6": return 0x0C;
+		case "Repeater/Talkaround": return 0x0D;
+		case "Scan On/Off": return 0x0E;
+		case "Tight/Normal Squelch": return 0x15;
+		case "Privacy On/Off": return 0x16;
+		case "VOX On/Off": return 0x17;
+		case "Zone Select": return 0x18;
+		case "Manual Dial For Private": return 0x1E;
+		case "Lone Work On/Off": return 0x1F;
+		default: return 0x00;
+	}
+}
+
+function convertOneTouchFunctionToCodeNum($otf) {
+	if ($otf == null) {
+		return 0xC1;
+	}
+
+	switch ($otf) {
+		case "Digital Text": return 0xD1;
+		case "Digital Call": return 0xD0;
+		case "Analog DTMF-1": return 0xE8;
+		case "Analog DTMF-2": return 0xE9;
+		case "Analog DTMF-3": return 0xEA;
+		case "Analog DTMF-4": return 0xEB;
+		default: return 0xC1;
+	}
+}
+
+function writeRDTButtonDefinitionsOneTouch(&$fh, &$textMsgArr, &$contactArr, $otIndex, $otFuncStr, $otMsgStr, $otCallStr) {
+	$otFuncCode = convertOneTouchFunctionToCodeNum($otFuncStr);
+	$otText = findTextMessageIndex($textMsgArr, $otMsgStr);
+	$otContact = findContactNameIndex($contactArr, $otCallStr);
+
+	fseek($fh, 0x2339 + (3*($otIndex - 1)));
+	$data = pack("CCC", $otFuncCode, $otText, $otContact);
+	fwrite($fh, $data);
+}
+
+function writeRDTButtonDefinitions(&$fh, &$buttons, &$textMsgArr, &$contactArr) {
+	$longPressVal = 0x04;
+	if ($buttons->getLongPressDuration() != null) {
+		if ($buttons->getLongPressDuration() >= 1000 && $buttons->getLongPressDuration() <= 3750 && $buttons->getLongPressDuration() % 250 == 0) {
+			$longPressVal = round($buttons->getLongPressDuration() / 250);
+		} else {
+			addError("Invalid button long press duration. Must be between 1000 and 3750 inclusive and a multiple of 250.");
+		}
+	}
+	$side1Short = convertButtonFunctionToCodeNum($buttons->getSideButton1ShortPress());
+	$side1Long = convertButtonFunctionToCodeNum($buttons->getSideButton1LongPress());
+	$side2Short = convertButtonFunctionToCodeNum($buttons->getSideButton2ShortPress());
+	$side2Long = convertButtonFunctionToCodeNum($buttons->getSideButton2LongPress());
+
+	fseek($fh, 0x2326);
+	$data = pack("CCCCC", $longPressVal, $side1Short, $side1Long, $side2Short, $side2Long);
+	fwrite($fh, $data);
+
+	writeRDTButtonDefinitionsOneTouch($fh, $textMsgArr, $contactArr, 1,
+			$buttons->getOneTouch1(),
+			$buttons->getOneTouch1Message(),
+			$buttons->getOneTouch1Call());
+
+	writeRDTButtonDefinitionsOneTouch($fh, $textMsgArr, $contactArr, 2,
+			$buttons->getOneTouch2(),
+			$buttons->getOneTouch2Message(),
+			$buttons->getOneTouch2Call());
+
+	writeRDTButtonDefinitionsOneTouch($fh, $textMsgArr, $contactArr, 3,
+			$buttons->getOneTouch3(),
+			$buttons->getOneTouch3Message(),
+			$buttons->getOneTouch3Call());
+
+	writeRDTButtonDefinitionsOneTouch($fh, $textMsgArr, $contactArr, 4,
+			$buttons->getOneTouch4(),
+			$buttons->getOneTouch4Message(),
+			$buttons->getOneTouch4Call());
+
+	writeRDTButtonDefinitionsOneTouch($fh, $textMsgArr, $contactArr, 5,
+			$buttons->getOneTouch5(),
+			$buttons->getOneTouch5Message(),
+			$buttons->getOneTouch5Call());
+
+	writeRDTButtonDefinitionsOneTouch($fh, $textMsgArr, $contactArr, 6,
+			$buttons->getOneTouch6(),
+			$buttons->getOneTouch6Message(),
+			$buttons->getOneTouch6Call());
+
+	fseek($fh, 0x2351);
+	$data = pack("vvvvvvvvvv",
+			findContactNameIndex($contactArr, $buttons->getQuickKey0()),
+			findContactNameIndex($contactArr, $buttons->getQuickKey1()),
+			findContactNameIndex($contactArr, $buttons->getQuickKey2()),
+			findContactNameIndex($contactArr, $buttons->getQuickKey3()),
+			findContactNameIndex($contactArr, $buttons->getQuickKey4()),
+			findContactNameIndex($contactArr, $buttons->getQuickKey5()),
+			findContactNameIndex($contactArr, $buttons->getQuickKey6()),
+			findContactNameIndex($contactArr, $buttons->getQuickKey7()),
+			findContactNameIndex($contactArr, $buttons->getQuickKey8()),
+			findContactNameIndex($contactArr, $buttons->getQuickKey9())
+		);
+
+	fwrite($fh, $data);
+}
+
 function writeRDTDigitalContact(&$fh, $contactNum, $callId, $callType, $name, $recvTone = false) {
 	// BCD = little endian = v
 	// RevBCD = big endian = n
@@ -760,12 +881,18 @@ function writeTextMessageList($fh, $textArr) {
 function generateRdtFile($baseSpreadsheetId, $personalSpreadsheetId) {
 	$spreadsheetData = retrieveSpreadsheetData($baseSpreadsheetId, $personalSpreadsheetId);
 
+	if ($spreadsheetData == null) {
+		addError("No data found");
+		return null;
+	}
 	$templateFile = __DIR__ . "/../codeplugs/tytMD380-blank.rdt";
 	$genFile = tempnam(sys_get_temp_dir(), 'RDT');
 	copy($templateFile, $genFile);
 	if ($fh = fopen($genFile, 'rb+')) {
 		writeRDTGeneralSettings($fh, $spreadsheetData->getGeneralSettings());
 		writeRDTMenuItems($fh, $spreadsheetData->getMenuItemsMap());
+		// TODO: Uncomment once testing is complete
+		//writeRDTButtonDefinitions($fh, $spreadsheetData->getButtonDefinitions(), $spreadsheetData->getTextMessageArray(), $spreadsheetData->getContactArray());
 		writeContacts($fh, $spreadsheetData->getContactArray());
 		writeRxGroupLists($fh, $spreadsheetData->getRxGroupListArray(), $spreadsheetData->getContactArray());
 		writeChannels($fh, $spreadsheetData->getChannelArray(), $spreadsheetData->getContactArray(), $spreadsheetData->getScanListArray(), $spreadsheetData->getRxGroupListArray());
