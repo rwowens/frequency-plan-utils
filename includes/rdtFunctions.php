@@ -294,13 +294,20 @@ function convertOneTouchFunctionToCodeNum($otf) {
 		return 0xC1;
 	}
 
+	if (strpos($otf, "Analog DTMF-") !== FALSE) {
+		addWarning("Analog one touch button functionality not supported");
+	}
+
+	// If we want to support the Analog DTMF-* functionality, we must also support
+	// the DTMF signalling. This seems like unnecessary effort the amateur use,
+	// so disabling the analog stuff for now.
 	switch ($otf) {
 		case "Digital Text": return 0xD1;
 		case "Digital Call": return 0xD0;
-		case "Analog DTMF-1": return 0xE8;
-		case "Analog DTMF-2": return 0xE9;
-		case "Analog DTMF-3": return 0xEA;
-		case "Analog DTMF-4": return 0xEB;
+// 		case "Analog DTMF-1": return 0xE8;
+// 		case "Analog DTMF-2": return 0xE9;
+// 		case "Analog DTMF-3": return 0xEA;
+// 		case "Analog DTMF-4": return 0xEB;
 		default: return 0xC1;
 	}
 }
@@ -310,7 +317,15 @@ function writeRDTButtonDefinitionsOneTouch(&$fh, &$textMsgArr, &$contactArr, $ot
 	$otText = findTextMessageIndex($textMsgArr, $otMsgStr);
 	$otContact = findContactNameIndex($contactArr, $otCallStr);
 
-	fseek($fh, 0x2339 + (3*($otIndex - 1)));
+	if ($otFuncCode == 0xD1 && ($otText == null || $otContact == null)) {
+		addError("For one touch button digital text mode, both a contact and a message must be specified");
+	}
+
+	if ($otFuncCode == 0xD0 && $otContact == null) {
+		addError("For one touch button (".$otIndex.") digital call mode, a contact must be specified");
+	}
+
+	fseek($fh, 0x2339 + (4*($otIndex - 1)));
 	$data = pack("CCC", $otFuncCode, $otText, $otContact);
 	fwrite($fh, $data);
 }
@@ -891,8 +906,7 @@ function generateRdtFile($baseSpreadsheetId, $personalSpreadsheetId) {
 	if ($fh = fopen($genFile, 'rb+')) {
 		writeRDTGeneralSettings($fh, $spreadsheetData->getGeneralSettings());
 		writeRDTMenuItems($fh, $spreadsheetData->getMenuItemsMap());
-		// TODO: Uncomment once testing is complete
-		//writeRDTButtonDefinitions($fh, $spreadsheetData->getButtonDefinitions(), $spreadsheetData->getTextMessageArray(), $spreadsheetData->getContactArray());
+		writeRDTButtonDefinitions($fh, $spreadsheetData->getButtonDefinitions(), $spreadsheetData->getTextMessageArray(), $spreadsheetData->getContactArray());
 		writeContacts($fh, $spreadsheetData->getContactArray());
 		writeRxGroupLists($fh, $spreadsheetData->getRxGroupListArray(), $spreadsheetData->getContactArray());
 		writeChannels($fh, $spreadsheetData->getChannelArray(), $spreadsheetData->getContactArray(), $spreadsheetData->getScanListArray(), $spreadsheetData->getRxGroupListArray());
