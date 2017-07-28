@@ -7,6 +7,16 @@ $personalDocId = (isset($_GET['personalFileId']) ? $_GET['personalFileId'] : nul
 if ($baseDocId == null) {
 	addError("You must select a base document");
 } else {
+	
+	if ($personalDocId != null && preg_match('/^[-a-zA-Z0-9]+$/', $personalDocId) === 1) {
+		// no action required
+	} else if ($personalDocId != null && preg_match('/^http.*\/d\/([-a-zA-Z0-9]+)\/edit.*$/', $personalDocId, $matches) === 1) {
+		// We got the full URL, so extract the doc ID
+		$personalDocId = $matches[1];
+	} else if ($personalDocId != null) {
+		addError("Invalid personal spreadsheet ID provided");
+		$personalDocId = null;
+	}
 	$outputFile = generateRdtFile($baseDocId, $personalDocId);
 }
 $ackHash = calculateAckHash();

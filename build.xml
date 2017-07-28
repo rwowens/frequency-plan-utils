@@ -14,6 +14,7 @@
 		<mkdir dir="${dist.dir}/codeplugs"/>
 		<mkdir dir="${dist.dir}/config"/>
 		<mkdir dir="${dist.dir}/includes"/>
+		<mkdir dir="${dist.dir}/docs"/>
 	</target>
 
 	<target name="prep-dist-vendor" depends="prep-dist-dir">
@@ -38,6 +39,7 @@
 				<include name="codeplugs/**"/>
 				<include name="config/sheets-example.json"/>
 				<include name="includes/**"/>
+				<include name="docs/**"/>
 			</fileset>
 		</copy>
 		<echo file="${dist.dir}/codeplugs/.htaccess">deny from all</echo>
