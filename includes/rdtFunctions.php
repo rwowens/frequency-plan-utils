@@ -758,6 +758,15 @@ function createRevBCD($value) {
 	return $retval;
 }
 
+function decodeRevBCD($value, $digitCount) {
+	$str = '';
+	for ($i = 0; $i < $digitCount; $i++) {
+		$str = ($value & 0x0F) . $str;
+		$value = $value >> 4;
+	}
+	return $str;
+}
+
 function createFrequencyBCD($freq) {
 	$freqParts = explode('.', $freq);
 	$freqParts[1] = str_pad($freqParts[1], 5, '0', STR_PAD_RIGHT);
@@ -975,7 +984,7 @@ function readRDTTextMessages($fh) {
 		fseek($fh, 0x23A5 + (288 * $index));
 		$rec = fread($fh, 288);
 		$binVals = unpack("v144msg", $rec);
-		if ($binVals['msg1'] == 0) {
+		if ($binVals['msg1'] == 0 || $binVals['msg1'] == 0xFFFF) {
 			continue;
 		}
 		$msg = decodeUnicodeStr($binVals, 'msg', 144);
@@ -1149,8 +1158,117 @@ function readRDTZones($fh, &$channelArr) {
 	return $objArr;
 }
 
+function readRDTGeneralSettings(&$fh) {
+	fseek($fh, 0x2265);
+
+	$rec = fread($fh, 40);
+	$binVals = unpack("v10infoone/v10infotwo", $rec);
+	$infoLine1 = '';
+	if ($binVals['infoone1'] != 0) {
+		$infoLine1 = decodeUnicodeStr($binVals, 'infoone', 10);
+	}
+	$infoLine2 = '';
+	if ($binVals['infotwo1'] != 0) {
+		$infoLine2 = decodeUnicodeStr($binVals, 'infotwo', 10);
+	}
+
+	fseek($fh, 0x2265 + 64);
+	$rec = fread($fh, 3);
+	$binVals = unpack("Cbyte1/Cbyte2/Cbyte3", $rec);
+	$monitorType = ($binVals['byte1'] && 0b00010000) != 0 ? 'Open Squelch' : 'Silent';
+	$isDisableAllLeds = (($binVals['byte1'] && 0b00000100) == 0) ? 'On' : 'Off';
+	$talkPermitTone = 'None';
+	if ($binVals['byte2'] & 0b11000000 == 0b11000000) {
+		$talkPermitTone = 'Analog & Digital';
+	} else if ($binVals['byte2'] & 0b11000000 == 0b10000000) {
+		$talkPermitTone = 'Analog';
+	} else if ($binVals['byte2'] & 0b11000000 == 0b01000000) {
+		$talkPermitTone = 'Digital';
+	}
+	$isPasswordAndLockEnabled = (($binVals['byte2'] & 0b00100000) == 0) ? 'On' : 'Off';
+	$isChFreeIndicationTone = (($binVals['byte2'] & 0b00010000) == 0) ? 'On' : 'Off';
+	$isDisableAllTone = (($binVals['byte2'] & 0b00000100) == 0) ? 'On' : 'Off';
+	$isSaveModeReceive = (($binVals['byte2'] & 0b00000010) != 0) ? 'On' : 'Off';
+	$isSavePreamble = (($binVals['byte2'] & 0b00000001) != 0) ? 'On' : 'Off';
+	$introScreen = ($binVals['byte3'] & 0b00010000) != 0 ? 'Picture' : 'Char string';
+
+	fseek($fh, 0x2265 + 68);
+	$rec = fread($fh, 4);
+	$binVals = unpack("Vradioid", $rec);
+	$radioId = $binVals['radioid'];
+
+	fseek($fh, 0x2265 + 72);
+	$rec = fread($fh, 4);
+	$binVals = unpack("Ctxpre/Cgroupcall/Cprivcall/Cvox", $rec);
+	$txPreamble = 60 * $binVals['txpre'];
+	$groupCallHangTime = 100 * $binVals['groupcall'];
+	$privateCallHangTime = 100 * $binVals['privcall'];
+	$voxSens = $binVals['vox'];
+
+	fseek($fh, 0x2265 + 78);
+	$rec = fread($fh, 4);
+	$binVals = unpack("Crxlow/Ccallalert/Cloneworkresp/Cloneworkrem", $rec);
+	$rxLowBatt = 5 * $binVals['rxlow'];
+	$callAlertTone = 5 * $binVals['callalert'];
+	if ($callAlertTone == 0) {
+		$callAlertTone = 'Continue';
+	}
+	$loneWorkerRespTime = $binVals['loneworkresp'];
+	$loneWorkerRemTime = $binVals['loneworkrem'];
+
+	fseek($fh, 0x2265 + 83);
+	$rec = fread($fh, 2);
+	$binVals = unpack("Cdig/Cana", $rec);
+	$scanDigHangTime = 100 * $binVals['dig'];
+	$scanAnalogHangTime = 100 * $binVals['ana'];
+
+	fseek($fh, 0x2265 + 85);
+	$rec = fread($fh, 1);
+	$binVals = unpack("Cbacklight", $rec);
+	$backlightTime = 5 * $binVals['backlight'];
+	if ($backlightTime == 0) {
+		$backlightTime = 'Always';
+	}
+
+	fseek($fh, 0x2265 + 86);
+	$rec = fread($fh, 10);
+	$binVals = unpack("Clock/Cmode/Npop/Nprog", $rec);
+	$keypadLockTime = 'Manual';
+	if ($binVals['lock'] != 255) {
+		$keypadLockTime = $binVals['lock'] * 5;
+	}
+	$mode = ($binVals['mode'] == 0) ? 'mr' : 'ch';
+
+	$powerOnPassword = decodeRevBCD($binVals['pop'], 8);
+	$radioProgramPassword = decodeRevBCD($binVals['prog'], 8);
+
+	fseek($fh, 0x2265 + 96);
+	$rec = fread($fh, 8);
+	$binVals = unpack("Ca/Cb/Cc/Cd/Ce/Cf/Cg/Ch", $rec);
+	$pcProgramPassword = '';
+	if ($binVals['a'] != 255) {
+		$pcProgramPassword = $binVals['a'].$binVals['b'].$binVals['c'].$binVals['d'].
+								$binVals['e'].$binVals['f'].$binVals['g'].$binVals['h'];
+	}
+
+	fseek($fh, 0x2265 + 112);
+	$rec = fread($fh, 32);
+	$binVals = unpack("v16name", $rec);
+	$radioName = '';
+	if ($binVals['name1'] != 0) {
+		$radioName = decodeUnicodeStr($binVals, 'name', 16);
+	}
+
+	return new GeneralSettings($infoLine1, $infoLine2, $monitorType, $isDisableAllLeds, $talkPermitTone, $isPasswordAndLockEnabled,
+			$isChFreeIndicationTone, $isDisableAllTone, $isSaveModeReceive, $isSavePreamble, $introScreen, $radioId, $txPreamble,
+			$groupCallHangTime, $privateCallHangTime, $voxSens, $rxLowBatt, $callAlertTone, $loneWorkerRespTime,
+			$loneWorkerRemTime, $scanDigHangTime, $scanAnalogHangTime, $keypadLockTime, $backlightTime, $mode, $powerOnPassword,
+			$radioProgramPassword, $pcProgramPassword, $radioName);
+}
+
 function importRDTFile($fileName, $spreadsheetId) {
 	if ($fh = fopen($fileName, 'rb+')) {
+		$generalSettings = readRDTGeneralSettings($fh);
 		$contactsArr = readRDTContacts($fh);
 		$rxGroupsArr = readRDTRxGroupLists($fh, $contactsArr);
 		$textMsgArr = readRDTTextMessages($fh);
@@ -1168,6 +1286,7 @@ function importRDTFile($fileName, $spreadsheetId) {
 		$channelData = convertToSpreadsheetValuesFromChannels($channelArr, $metadata[DATA_KEY_CHANNEL_COLUMNS][0], $scanListArr);
 		$scanListData = convertToSpreadsheetValuesFromScanLists($scanListArr);
 		$zoneData = convertToSpreadsheetValuesFromZones($zoneArr);
+		$generalSettingsData = convertToSpreadsheetValuesFromGeneralSettings($generalSettings, $metadata[DATA_KEY_GENERAL_SETTINGS]);
 
 		$data = array();
 		$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_CONTACTS, 'values' => $contactsData));
@@ -1176,7 +1295,8 @@ function importRDTFile($fileName, $spreadsheetId) {
 		$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_CHANNELS, 'values' => $channelData));
 		$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_SCAN_LISTS, 'values' => $scanListData));
 		$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_ZONES, 'values' => $zoneData));
-		
+		$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_GENERAL_SETTINGS, 'values' => $generalSettingsData));
+
 		$body = new Google_Service_Sheets_BatchUpdateValuesRequest(array(
 				'valueInputOption' => 'USER_ENTERED',
 				'data' => $data

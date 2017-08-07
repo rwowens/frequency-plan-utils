@@ -646,6 +646,55 @@ function readZoneInfoList($baseValues, $personalValues) {
 	return $zoneArr;
 }
 
+function getGeneralSettingByFieldName(&$generalSettings, &$fieldName) {
+	switch ($fieldName) {
+		case ROW_GENERAL_BACKLIGHT_TIME: return $generalSettings->getBacklightTime();
+		case ROW_GENERAL_CALL_ALERT_TONE: return $generalSettings->getCallAlertToneDuration();
+		case ROW_GENERAL_CH_FREE_TONE: return $generalSettings->isChFreeIndicationTone() ? 'On' : 'Off';
+		case ROW_GENERAL_DISABLE_ALL_TONE: return $generalSettings->isDisableAllTone() ? 'On' : 'Off';
+		case ROW_GENERAL_DISABLE_LEDS: return $generalSettings->isDisableAllLeds() ? 'On' : 'Off';
+		case ROW_GENERAL_GROUP_CALL_HANG_TIME: return $generalSettings->getGroupCallHangTime();
+		case ROW_GENERAL_INFO1: return $generalSettings->getInfoScreenLine1();
+		case ROW_GENERAL_INFO2: return $generalSettings->getInfoScreenLine2();
+		case ROW_GENERAL_INTRO_SCREEN: return $generalSettings->getIntroScreen();
+		case ROW_GENERAL_KEYPAD_LOCK_TIME: return $generalSettings->getKeypadLockTime();
+		case ROW_GENERAL_LONE_WORKER_REMIND: return $generalSettings->getLoneWorkerReminderTime();
+		case ROW_GENERAL_LONE_WORKER_RESP: return $generalSettings->getLoneWorkerRespTime();
+		case ROW_GENERAL_MODE: return $generalSettings->getMode();
+		case ROW_GENERAL_MONITOR_TYPE: return $generalSettings->getMonitorType();
+		case ROW_GENERAL_PASSWORD_ENABLE: return $generalSettings->isPasswordAndLockEnable() ? 'On' : 'Off';
+		case ROW_GENERAL_PC_PROGRAM_PASSWORD: return $generalSettings->getPcProgramPassword();
+		case ROW_GENERAL_POWER_ON_PASSWORD: return $generalSettings->getPowerOnPassword();
+		case ROW_GENERAL_PRIVATE_CALL_HANG_TIME: return $generalSettings->getPrivateCallHangTime();
+		case ROW_GENERAL_RADIO_ID: return $generalSettings->getRadioId();
+		case ROW_GENERAL_RADIO_NAME: return $generalSettings->getRadioName();
+		case ROW_GENERAL_RADIO_PROGRAM_PASSWORD: return $generalSettings->getRadioProgramPassword();
+		case ROW_GENERAL_RX_LOW_BATT: return $generalSettings->getRxLowBatteryInterval();
+		case ROW_GENERAL_SAVE_MODE_RECV: return $generalSettings->isSaveModeReceive() ? 'On' : 'Off';
+		case ROW_GENERAL_SAVE_PREAMBLE: return $generalSettings->isSavePreamble() ? 'On' : 'Off';
+		case ROW_GENERAL_SCAN_ANALOG_HANG_TIME: return $generalSettings->getScanAnalogHangTime();
+		case ROW_GENERAL_SCAN_DIGITAL_HANG_TIME: return $generalSettings->getScanDigitalHangTime();
+		case ROW_GENERAL_TALK_PERMIT_TONE: return $generalSettings->getTalkPermitTone();
+		case ROW_GENERAL_TX_PREAMBLE: return $generalSettings->getTxPreamble();
+		case ROW_GENERAL_VOX_SENSITIVITY: return $generalSettings->getVoxSensitivity();
+		default: return '';
+	}
+}
+
+function convertToSpreadsheetValuesFromGeneralSettings(&$generalSettings, &$oldSettings) {
+	$values = array();
+
+	foreach ($oldSettings as $oldRow) {
+		if (count($oldRow) > 0 && strlen($oldRow[0]) > 0) { 
+			$row = array();
+			$row[] = $oldRow[0];
+			$row[] = getGeneralSettingByFieldName($generalSettings, $oldRow[0]);
+			$values[] = $row;
+		}
+	}
+	return $values;
+}
+
 function getChannelAttributeByColumnName(&$channel, &$colName, &$scanListArr) {
 	switch ($colName) {
 		case COL_CHANNEL_ADMIT_CRITERIA: return $channel->getAdmitCriteria();
@@ -768,6 +817,7 @@ function convertToSpreadsheetValuesFromZones($objArr) {
 function readMetadataFromSpreadsheet($gService, $spreadsheetId) {
 	$ranges = array(
 			DATA_KEY_CHANNEL_COLUMNS,
+			DATA_KEY_GENERAL_SETTINGS
 	);
 	$params = array(
 			'ranges' => $ranges
@@ -775,6 +825,7 @@ function readMetadataFromSpreadsheet($gService, $spreadsheetId) {
 	$rangeContents = $gService->spreadsheets_values->batchGet($spreadsheetId, $params);
 	$results = array();
 	$results[DATA_KEY_CHANNEL_COLUMNS] = $rangeContents->valueRanges[0]->values;
+	$results[DATA_KEY_GENERAL_SETTINGS] = $rangeContents->valueRanges[1]->values;
 	return $results;
 }
 
