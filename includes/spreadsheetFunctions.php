@@ -686,10 +686,59 @@ function convertToSpreadsheetValuesFromGeneralSettings(&$generalSettings, &$oldS
 
 	foreach ($oldSettings as $oldRow) {
 		if (count($oldRow) > 0 && strlen($oldRow[0]) > 0) { 
-			$row = array();
-			$row[] = $oldRow[0];
-			$row[] = getGeneralSettingByFieldName($generalSettings, $oldRow[0]);
-			$values[] = $row;
+			$values[] = array($oldRow[0], getGeneralSettingByFieldName($generalSettings, $oldRow[0]));
+		} else {
+			$values[] = array();
+		}
+	}
+	return $values;
+}
+
+function convertBooleanToChecked($boolean) {
+	return $boolean ? 'Checked' : 'Unchecked';
+}
+
+function getMenuItemByFieldName(&$menuItems, &$fieldName) {
+	switch ($fieldName) {
+		case ROW_MENU_ANSWERED: return convertBooleanToChecked($menuItems->isAnswered());
+		case ROW_MENU_BACKLIGHT: return convertBooleanToChecked($menuItems->isBacklight());
+		case ROW_MENU_CALL_ALERT: return convertBooleanToChecked($menuItems->isCallAlert());
+		case ROW_MENU_DISPLAY_MODE: return convertBooleanToChecked($menuItems->isDisplayMode());
+		case ROW_MENU_EDIT: return convertBooleanToChecked($menuItems->isEdit());
+		case ROW_MENU_EDIT_LIST: return convertBooleanToChecked($menuItems->isEditList());
+		case ROW_MENU_INTRO_SCREEN: return convertBooleanToChecked($menuItems->isIntroScreen());
+		case ROW_MENU_KEYBOARD_LOCK: return convertBooleanToChecked($menuItems->isKeyboardLock());
+		case ROW_MENU_LED_INDICATOR: return convertBooleanToChecked($menuItems->isLedIndicator());
+		case ROW_MENU_MANUAL_DIAL: return convertBooleanToChecked($menuItems->isManualDial());
+		case ROW_MENU_MENU_HANG_TIME: return $menuItems->getMenuHangTime();
+		case ROW_MENU_MISSED: return convertBooleanToChecked($menuItems->isMissed());
+		case ROW_MENU_OUTGOING_RADIO: return convertBooleanToChecked($menuItems->isOutgoingRadio());
+		case ROW_MENU_PASSWORD_AND_LOCK: return convertBooleanToChecked($menuItems->isPasswordAndLock());
+		case ROW_MENU_POWER: return convertBooleanToChecked($menuItems->isPower());
+		case ROW_MENU_PROGRAM_KEY: return convertBooleanToChecked($menuItems->isProgramKey());
+		case ROW_MENU_PROGRAM_RADIO: return convertBooleanToChecked($menuItems->isProgramRadio());
+		case ROW_MENU_RADIO_CHECK: return convertBooleanToChecked($menuItems->isRadioCheck());
+		case ROW_MENU_RADIO_DISABLE: return convertBooleanToChecked($menuItems->isRadioDisable());
+		case ROW_MENU_RADIO_ENABLE: return convertBooleanToChecked($menuItems->isRadioEnable());
+		case ROW_MENU_REMOTE_MONITOR: return convertBooleanToChecked($menuItems->isRemoteMonitor());
+		case ROW_MENU_SCAN: return convertBooleanToChecked($menuItems->isScan());
+		case ROW_MENU_SQUELCH: return convertBooleanToChecked($menuItems->isSquelch());
+		case ROW_MENU_TALKAROUND: return convertBooleanToChecked($menuItems->isTalkaround());
+		case ROW_MENU_TEXT_MESSAGE: return convertBooleanToChecked($menuItems->isTextMessage());
+		case ROW_MENU_TONE_OR_ALERT: return convertBooleanToChecked($menuItems->isToneOrAlert());
+		case ROW_MENU_VOX: return convertBooleanToChecked($menuItems->isVox());
+		default: return '';
+	}
+}
+
+function convertToSpreadsheetValuesFromMenuItems(&$menuItems, &$oldSettings) {
+	$values = array();
+
+	foreach ($oldSettings as $oldRow) {
+		if (count($oldRow) > 0 && strlen($oldRow[0]) > 0) {
+			$values[] = array($oldRow[0], getMenuItemByFieldName($menuItems, $oldRow[0]));
+		} else {
+			$values[] = array();
 		}
 	}
 	return $values;
@@ -817,7 +866,8 @@ function convertToSpreadsheetValuesFromZones($objArr) {
 function readMetadataFromSpreadsheet($gService, $spreadsheetId) {
 	$ranges = array(
 			DATA_KEY_CHANNEL_COLUMNS,
-			DATA_KEY_GENERAL_SETTINGS
+			DATA_KEY_GENERAL_SETTINGS,
+			DATA_KEY_MENU_ITEMS
 	);
 	$params = array(
 			'ranges' => $ranges
@@ -826,6 +876,7 @@ function readMetadataFromSpreadsheet($gService, $spreadsheetId) {
 	$results = array();
 	$results[DATA_KEY_CHANNEL_COLUMNS] = $rangeContents->valueRanges[0]->values;
 	$results[DATA_KEY_GENERAL_SETTINGS] = $rangeContents->valueRanges[1]->values;
+	$results[DATA_KEY_MENU_ITEMS] = $rangeContents->valueRanges[2]->values;
 	return $results;
 }
 

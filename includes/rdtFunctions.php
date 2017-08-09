@@ -1266,6 +1266,75 @@ function readRDTGeneralSettings(&$fh) {
 			$radioProgramPassword, $pcProgramPassword, $radioName);
 }
 
+function readRDTMenuItems(&$fh) {
+	fseek($fh, 0x2315);
+	$rec = fread($fh, 5);
+	$binVals = unpack("C5byte", $rec);
+
+	$menuHangTime = $binVals['byte1'];
+	$byte1 = $binVals['byte2'];
+	$byte2 = $binVals['byte3'];
+	$byte3 = $binVals['byte4'];
+	$byte4 = $binVals['byte5'];
+	$isRadioDisable =	convertBooleanToChecked(($byte1 & 0b10000000) != 0);
+	$isRadioEnable =	convertBooleanToChecked(($byte1 & 0b01000000) != 0);
+	$isRemoteMonitor =	convertBooleanToChecked(($byte1 & 0b00100000) != 0);
+	$isRadioCheck =		convertBooleanToChecked(($byte1 & 0b00010000) != 0);
+	$isManualDial =		convertBooleanToChecked(($byte1 & 0b00001000) != 0);
+	$isEdit =			convertBooleanToChecked(($byte1 & 0b00000100) != 0);
+	$isCallAlert =		convertBooleanToChecked(($byte1 & 0b00000010) != 0);
+	$isTextMessage =	convertBooleanToChecked(($byte1 & 0b00000001) != 0);
+
+	$isToneOrAlert =	convertBooleanToChecked(($byte2 & 0b10000000) != 0);
+	$isTalkaround =		convertBooleanToChecked(($byte2 & 0b01000000) != 0);
+	$isOutgoingRadio =	convertBooleanToChecked(($byte2 & 0b00100000) != 0);
+	$isAnswered =		convertBooleanToChecked(($byte2 & 0b00010000) != 0);
+	$isMissed =			convertBooleanToChecked(($byte2 & 0b00001000) != 0);
+	$isEditList =		convertBooleanToChecked(($byte2 & 0b00000100) != 0);
+	$isScan =			convertBooleanToChecked(($byte2 & 0b00000010) != 0);
+	$isProgramKey =		convertBooleanToChecked(($byte2 & 0b00000001) != 0);
+
+	$isVox =			convertBooleanToChecked(($byte3 & 0b10000000) != 0);
+	$isSquelch =		convertBooleanToChecked(($byte3 & 0b00100000) != 0);
+	$isKeyboardLock =	convertBooleanToChecked(($byte3 & 0b00001000) != 0);
+	$isBacklight =		convertBooleanToChecked(($byte3 & 0b00000010) != 0);
+	$isLedIndicator =	convertBooleanToChecked(($byte3 & 0b00010000) != 0);
+	$isIntroScreen =	convertBooleanToChecked(($byte3 & 0b00000100) != 0);
+	$isPower =			convertBooleanToChecked(($byte3 & 0b00000001) != 0);
+
+	$isProgramRadio =	convertBooleanToChecked(($byte4 & 0b00000100) != 0);
+	$isDisplayMode =	convertBooleanToChecked(($byte4 & 0b00000010) != 0);
+	$isPasswordAndLock =convertBooleanToChecked(($byte4 & 0b00000001) != 0);
+	 
+	return new MenuItem($isTextMessage,
+						$isCallAlert,
+						$isManualDial,
+						$isRemoteMonitor,
+						$isRadioEnable,
+						$isEdit,
+						$isRadioCheck,
+						$isProgramKey,
+						$isRadioDisable,
+						$isMissed,
+						$isOutgoingRadio,
+						$isAnswered,
+						$isTalkaround,
+						$isPower,
+						$isIntroScreen,
+						$isLedIndicator,
+						$isPasswordAndLock,
+						$isDisplayMode,
+						$isToneOrAlert,
+						$isBacklight,
+						$isKeyboardLock,
+						$isSquelch,
+						$isVox,
+						$isProgramRadio,
+						$isScan,
+						$isEditList,
+						$menuHangTime);
+}
+
 function importRDTFile($fileName, $spreadsheetId) {
 	if ($fh = fopen($fileName, 'rb+')) {
 		$generalSettings = readRDTGeneralSettings($fh);
@@ -1275,6 +1344,7 @@ function importRDTFile($fileName, $spreadsheetId) {
 		$channelArr = readRDTChannel($fh, $contactsArr, $rxGroupsArr);
 		$scanListArr = readRDTScanLists($fh, $channelArr);
 		$zoneArr = readRDTZones($fh, $channelArr);
+		$menuItems = readRDTMenuItems($fh);
 
 		$gClient = getGoogleClient(false);
 		$service = new Google_Service_Sheets($gClient);
@@ -1287,6 +1357,7 @@ function importRDTFile($fileName, $spreadsheetId) {
 		$scanListData = convertToSpreadsheetValuesFromScanLists($scanListArr);
 		$zoneData = convertToSpreadsheetValuesFromZones($zoneArr);
 		$generalSettingsData = convertToSpreadsheetValuesFromGeneralSettings($generalSettings, $metadata[DATA_KEY_GENERAL_SETTINGS]);
+		$menuItemsData = convertToSpreadsheetValuesFromMenuItems($menuItems, $metadata[DATA_KEY_MENU_ITEMS]);
 
 		$data = array();
 		$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_CONTACTS, 'values' => $contactsData));
@@ -1296,6 +1367,7 @@ function importRDTFile($fileName, $spreadsheetId) {
 		$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_SCAN_LISTS, 'values' => $scanListData));
 		$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_ZONES, 'values' => $zoneData));
 		$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_GENERAL_SETTINGS, 'values' => $generalSettingsData));
+		$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_MENU_ITEMS, 'values' => $menuItemsData));
 
 		$body = new Google_Service_Sheets_BatchUpdateValuesRequest(array(
 				'valueInputOption' => 'USER_ENTERED',
