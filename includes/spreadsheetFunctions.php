@@ -744,6 +744,58 @@ function convertToSpreadsheetValuesFromMenuItems(&$menuItems, &$oldSettings) {
 	return $values;
 }
 
+function getButtonDefinitionByFieldName(&$buttonDefinitions, &$fieldName) {
+	switch ($fieldName) {
+		case ROW_BUTTONS_LONG_PRESS_DURATION_MS: return $buttonDefinitions->getLongPressDuration();
+		case ROW_BUTTONS_SIDE_BUTTON_1_SHORT_PRESS: return $buttonDefinitions->getSideButton1ShortPress();
+		case ROW_BUTTONS_SIDE_BUTTON_1_LONG_PRESS: return $buttonDefinitions->getSideButton1LongPress();
+		case ROW_BUTTONS_SIDE_BUTTON_2_SHORT_PRESS: return $buttonDefinitions->getSideButton2ShortPress();
+		case ROW_BUTTONS_SIDE_BUTTON_2_LONG_PRESS: return $buttonDefinitions->getSideButton2LongPress();
+		case ROW_BUTTONS_ONE_TOUCH_ACCESS_1: return $buttonDefinitions->getOneTouch1();
+		case ROW_BUTTONS_ONE_TOUCH_ACCESS_1_CALL: return $buttonDefinitions->getOneTouch1Call();
+		case ROW_BUTTONS_ONE_TOUCH_ACCESS_1_MESSAGE: return $buttonDefinitions->getOneTouch1Message();
+		case ROW_BUTTONS_ONE_TOUCH_ACCESS_2: return $buttonDefinitions->getOneTouch2();
+		case ROW_BUTTONS_ONE_TOUCH_ACCESS_2_CALL: return $buttonDefinitions->getOneTouch2Call();
+		case ROW_BUTTONS_ONE_TOUCH_ACCESS_2_MESSAGE: return $buttonDefinitions->getOneTouch2Message();
+		case ROW_BUTTONS_ONE_TOUCH_ACCESS_3: return $buttonDefinitions->getOneTouch3();
+		case ROW_BUTTONS_ONE_TOUCH_ACCESS_3_CALL: return $buttonDefinitions->getOneTouch3Call();
+		case ROW_BUTTONS_ONE_TOUCH_ACCESS_3_MESSAGE: return $buttonDefinitions->getOneTouch3Message();
+		case ROW_BUTTONS_ONE_TOUCH_ACCESS_4: return $buttonDefinitions->getOneTouch4();
+		case ROW_BUTTONS_ONE_TOUCH_ACCESS_4_CALL: return $buttonDefinitions->getOneTouch4Call();
+		case ROW_BUTTONS_ONE_TOUCH_ACCESS_4_MESSAGE: return $buttonDefinitions->getOneTouch4Message();
+		case ROW_BUTTONS_ONE_TOUCH_ACCESS_5: return $buttonDefinitions->getOneTouch5();
+		case ROW_BUTTONS_ONE_TOUCH_ACCESS_5_CALL: return $buttonDefinitions->getOneTouch5Call();
+		case ROW_BUTTONS_ONE_TOUCH_ACCESS_5_MESSAGE: return $buttonDefinitions->getOneTouch5Message();
+		case ROW_BUTTONS_ONE_TOUCH_ACCESS_6: return $buttonDefinitions->getOneTouch6();
+		case ROW_BUTTONS_ONE_TOUCH_ACCESS_6_CALL: return $buttonDefinitions->getOneTouch6Call();
+		case ROW_BUTTONS_ONE_TOUCH_ACCESS_6_MESSAGE: return $buttonDefinitions->getOneTouch6Message();
+		case ROW_BUTTONS_QUICK_ACCESS_0: return $buttonDefinitions->getQuickKey0();
+		case ROW_BUTTONS_QUICK_ACCESS_1: return $buttonDefinitions->getQuickKey1();
+		case ROW_BUTTONS_QUICK_ACCESS_2: return $buttonDefinitions->getQuickKey2();
+		case ROW_BUTTONS_QUICK_ACCESS_3: return $buttonDefinitions->getQuickKey3();
+		case ROW_BUTTONS_QUICK_ACCESS_4: return $buttonDefinitions->getQuickKey4();
+		case ROW_BUTTONS_QUICK_ACCESS_5: return $buttonDefinitions->getQuickKey5();
+		case ROW_BUTTONS_QUICK_ACCESS_6: return $buttonDefinitions->getQuickKey6();
+		case ROW_BUTTONS_QUICK_ACCESS_7: return $buttonDefinitions->getQuickKey7();
+		case ROW_BUTTONS_QUICK_ACCESS_8: return $buttonDefinitions->getQuickKey8();
+		case ROW_BUTTONS_QUICK_ACCESS_9: return $buttonDefinitions->getQuickKey9();
+		default: return '';
+	}
+}
+
+function convertToSpreadsheetValuesFromButtonsDefinitions(&$buttonDefinitions, &$oldSettings) {
+	$values = array();
+	
+	foreach ($oldSettings as $oldRow) {
+		if (count($oldRow) > 0 && strlen($oldRow[0]) > 0) {
+			$values[] = array($oldRow[0], getButtonDefinitionByFieldName($buttonDefinitions, $oldRow[0]));
+		} else {
+			$values[] = array();
+		}
+	}
+	return $values;
+}
+
 function getChannelAttributeByColumnName(&$channel, &$colName, &$scanListArr) {
 	switch ($colName) {
 		case COL_CHANNEL_ADMIT_CRITERIA: return $channel->getAdmitCriteria();
@@ -867,7 +919,8 @@ function readMetadataFromSpreadsheet($gService, $spreadsheetId) {
 	$ranges = array(
 			DATA_KEY_CHANNEL_COLUMNS,
 			DATA_KEY_GENERAL_SETTINGS,
-			DATA_KEY_MENU_ITEMS
+			DATA_KEY_MENU_ITEMS,
+			DATA_KEY_BUTTON_DEFINITIONS,
 	);
 	$params = array(
 			'ranges' => $ranges
@@ -877,6 +930,7 @@ function readMetadataFromSpreadsheet($gService, $spreadsheetId) {
 	$results[DATA_KEY_CHANNEL_COLUMNS] = $rangeContents->valueRanges[0]->values;
 	$results[DATA_KEY_GENERAL_SETTINGS] = $rangeContents->valueRanges[1]->values;
 	$results[DATA_KEY_MENU_ITEMS] = $rangeContents->valueRanges[2]->values;
+	$results[DATA_KEY_BUTTON_DEFINITIONS] = $rangeContents->valueRanges[3]->values;
 	return $results;
 }
 

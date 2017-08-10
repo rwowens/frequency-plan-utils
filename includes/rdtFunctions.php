@@ -259,33 +259,64 @@ function writeRDTMenuItems(&$fh, &$menuItems) {
 	fwrite($fh, $data);
 }
 
+function getButtonCodesArray() {
+	return array(
+			0x00 => 'Unassigned (default)',
+			0x01 => 'All Alert Tones On/Off',
+			0x02 => 'Emergency On',
+			0x03 => 'Emergency Off',
+			0x04 => 'High/Low Power',
+			0x05 => 'Monitor',
+			0x06 => 'Nuisance Delete',
+			0x07 => 'One Touch Access 1',
+			0x08 => 'One Touch Access 2',
+			0x09 => 'One Touch Access 3',
+			0x0A => 'One Touch Access 4',
+			0x0B => 'One Touch Access 5',
+			0x0C => 'One Touch Access 6',
+			0x0D => 'Repeater/Talkaround',
+			0x0E => 'Scan On/Off',
+			0x15 => 'Tight/Normal Squelch',
+			0x16 => 'Privacy On/Off',
+			0x17 => 'VOX On/Off',
+			0x18 => 'Zone Select',
+			0x1E => 'Manual Dial For Private',
+			0x1F => 'Lone Work On/Off',
+	);
+}
+
+function convertCodeNumToButtonFunction($codeNum) {
+	$arr = getButtonCodesArray();
+	$name = $arr[$codeNum];
+	if ($name == null) {
+		$name = $arr[0x00];
+	}
+	return $name;
+}
+
 function convertButtonFunctionToCodeNum($btnFunction) {
 	if ($btnFunction == null) {
 		return 0x00;
 	}
 
-	switch ($btnFunction) {
-		case "All Alert Tones On/Off": return 0x01;
-		case "Emergency On": return 0x02;
-		case "Emergency Off": return 0x03;
-		case "High/Low Power": return 0x04;
-		case "Monitor": return 0x05;
-		case "Nuisance Delete": return 0x06;
-		case "One Touch Access 1": return 0x07;
-		case "One Touch Access 2": return 0x08;
-		case "One Touch Access 3": return 0x09;
-		case "One Touch Access 4": return 0x0A;
-		case "One Touch Access 5": return 0x0B;
-		case "One Touch Access 6": return 0x0C;
-		case "Repeater/Talkaround": return 0x0D;
-		case "Scan On/Off": return 0x0E;
-		case "Tight/Normal Squelch": return 0x15;
-		case "Privacy On/Off": return 0x16;
-		case "VOX On/Off": return 0x17;
-		case "Zone Select": return 0x18;
-		case "Manual Dial For Private": return 0x1E;
-		case "Lone Work On/Off": return 0x1F;
-		default: return 0x00;
+	$arr = getButtonCodesArray();
+	$codeNum = array_search($btnFunction, $arr);
+	if ($codeNum === FALSE) {
+		$codeNum = 0x00;
+	}
+	return $codeNum;
+}
+
+function convertCodeNumToOneTouchFunction($codeNum) {
+	switch ($codeNum) {
+		case 0xC1: return 'None';
+		case 0xD1: return 'Digital Text';
+		case 0xD0: return 'Digital Call';
+		case 0xE8: return 'Analog DTMF-1';
+		case 0xE9: return 'Analog DTMF-2';
+		case 0xEA: return 'Analog DTMF-3';
+		case 0xEB: return 'Analog DTMF-4';
+		default: return '';
 	}
 }
 
@@ -299,7 +330,7 @@ function convertOneTouchFunctionToCodeNum($otf) {
 	}
 
 	// If we want to support the Analog DTMF-* functionality, we must also support
-	// the DTMF signalling. This seems like unnecessary effort the amateur use,
+	// the DTMF signalling. This seems like unnecessary effort for amateur use,
 	// so disabling the analog stuff for now.
 	switch ($otf) {
 		case "Digital Text": return 0xD1;
@@ -1335,7 +1366,58 @@ function readRDTMenuItems(&$fh) {
 						$menuHangTime);
 }
 
-function importRDTFile($fileName, $spreadsheetId) {
+function readRDTButtonDefinitions(&$fh, &$textMsgArr, &$contactArr) {
+	fseek($fh, 0x2326);
+	$rec = fread($fh, 5);
+	$binVals = unpack('C5byte', $rec);
+
+	$longPressDuration = $binVals['byte1'] * 250;
+	if ($longPressDuration == 0) {
+		$longPressDuration = 1000;
+	}
+	$sideButton1ShortPress = convertCodeNumToButtonFunction($binVals['byte2']);
+	$sideButton1LongPress = convertCodeNumToButtonFunction($binVals['byte3']);
+	$sideButton2ShortPress = convertCodeNumToButtonFunction($binVals['byte4']);
+	$sideButton2LongPress = convertCodeNumToButtonFunction($binVals['byte5']);
+
+	$otFuncArr = array();
+	$otTextArr = array();
+	$otContactArr = array();
+	for ($otIndex = 1; $otIndex <= 6; $otIndex++) {
+		fseek($fh, 0x2339 + (4*($otIndex - 1)));
+		$rec = fread($fh, 3);
+		$binVals = unpack('C3byte', $rec);
+
+		$otFuncArr[$otIndex] = convertCodeNumToOneTouchFunction($binVals['byte1']);
+		$otTextArr[$otIndex] =  $textMsgArr[$binVals['byte2'] - 1]->getText();
+		$otContactArr[$otIndex] = $contactArr[$binVals['byte3'] - 1]->getContactName();
+	}
+
+	fseek($fh, 0x2351);
+	$rec = fread($fh, 20);
+	$binVals = unpack("v10keys", $rec);
+
+	return new ButtonsDefinitions($longPressDuration,
+			$sideButton1ShortPress, $sideButton1LongPress, $sideButton2ShortPress, $sideButton2LongPress,
+			$otFuncArr[1], $otContactArr[1], $otTextArr[1],
+			$otFuncArr[2], $otContactArr[2], $otTextArr[2],
+			$otFuncArr[3], $otContactArr[3], $otTextArr[3],
+			$otFuncArr[4], $otContactArr[4], $otTextArr[4],
+			$otFuncArr[5], $otContactArr[5], $otTextArr[5],
+			$otFuncArr[6], $otContactArr[6], $otTextArr[6],
+			$contactArr[$binVals['keys1']]->getContactName(),
+			$contactArr[$binVals['keys2']]->getContactName(),
+			$contactArr[$binVals['keys3']]->getContactName(),
+			$contactArr[$binVals['keys4']]->getContactName(),
+			$contactArr[$binVals['keys5']]->getContactName(),
+			$contactArr[$binVals['keys6']]->getContactName(),
+			$contactArr[$binVals['keys7']]->getContactName(),
+			$contactArr[$binVals['keys8']]->getContactName(),
+			$contactArr[$binVals['keys9']]->getContactName(),
+			$contactArr[$binVals['keys10']]->getContactName());
+}
+
+function importRDTFile($fileName, $spreadsheetId, $importRegionsArr) {
 	if ($fh = fopen($fileName, 'rb+')) {
 		$generalSettings = readRDTGeneralSettings($fh);
 		$contactsArr = readRDTContacts($fh);
@@ -1345,6 +1427,7 @@ function importRDTFile($fileName, $spreadsheetId) {
 		$scanListArr = readRDTScanLists($fh, $channelArr);
 		$zoneArr = readRDTZones($fh, $channelArr);
 		$menuItems = readRDTMenuItems($fh);
+		$buttons = readRDTButtonDefinitions($fh, $textMsgArr, $contactsArr);
 
 		$gClient = getGoogleClient(false);
 		$service = new Google_Service_Sheets($gClient);
@@ -1358,16 +1441,36 @@ function importRDTFile($fileName, $spreadsheetId) {
 		$zoneData = convertToSpreadsheetValuesFromZones($zoneArr);
 		$generalSettingsData = convertToSpreadsheetValuesFromGeneralSettings($generalSettings, $metadata[DATA_KEY_GENERAL_SETTINGS]);
 		$menuItemsData = convertToSpreadsheetValuesFromMenuItems($menuItems, $metadata[DATA_KEY_MENU_ITEMS]);
-
+		$buttonsData = convertToSpreadsheetValuesFromButtonsDefinitions($buttons, $metadata[DATA_KEY_BUTTON_DEFINITIONS]);
+		
 		$data = array();
-		$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_CONTACTS, 'values' => $contactsData));
-		$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_RX_GROUP_LISTS, 'values' => $rxGroupsData));
-		$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_TEXT, 'values' => $textMsgData));
-		$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_CHANNELS, 'values' => $channelData));
-		$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_SCAN_LISTS, 'values' => $scanListData));
-		$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_ZONES, 'values' => $zoneData));
-		$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_GENERAL_SETTINGS, 'values' => $generalSettingsData));
-		$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_MENU_ITEMS, 'values' => $menuItemsData));
+		if (in_array(DATA_KEY_CONTACTS, $importRegionsArr)) {
+			$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_CONTACTS, 'values' => $contactsData));
+		}
+		if (in_array(DATA_KEY_RX_GROUP_LISTS, $importRegionsArr)) {
+			$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_RX_GROUP_LISTS, 'values' => $rxGroupsData));
+		}
+		if (in_array(DATA_KEY_TEXT, $importRegionsArr)) {
+			$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_TEXT, 'values' => $textMsgData));
+		}
+		if (in_array(DATA_KEY_CHANNELS, $importRegionsArr)) {
+			$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_CHANNELS, 'values' => $channelData));
+		}
+		if (in_array(DATA_KEY_SCAN_LISTS, $importRegionsArr)) {
+			$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_SCAN_LISTS, 'values' => $scanListData));
+		}
+		if (in_array(DATA_KEY_ZONES, $importRegionsArr)) {
+			$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_ZONES, 'values' => $zoneData));
+		}
+		if (in_array(DATA_KEY_GENERAL_SETTINGS, $importRegionsArr)) {
+			$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_GENERAL_SETTINGS, 'values' => $generalSettingsData));
+		}
+		if (in_array(DATA_KEY_MENU_ITEMS, $importRegionsArr)) {
+			$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_MENU_ITEMS, 'values' => $menuItemsData));
+		}
+		if (in_array(DATA_KEY_BUTTON_DEFINITIONS, $importRegionsArr)) {
+			$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_BUTTON_DEFINITIONS, 'values' => $buttonsData));
+		}
 
 		$body = new Google_Service_Sheets_BatchUpdateValuesRequest(array(
 				'valueInputOption' => 'USER_ENTERED',
