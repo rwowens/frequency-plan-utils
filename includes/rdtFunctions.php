@@ -1419,66 +1419,70 @@ function readRDTButtonDefinitions(&$fh, &$textMsgArr, &$contactArr) {
 
 function importRDTFile($fileName, $spreadsheetId, $importRegionsArr) {
 	if ($fh = fopen($fileName, 'rb+')) {
-		$generalSettings = readRDTGeneralSettings($fh);
-		$contactsArr = readRDTContacts($fh);
-		$rxGroupsArr = readRDTRxGroupLists($fh, $contactsArr);
-		$textMsgArr = readRDTTextMessages($fh);
-		$channelArr = readRDTChannel($fh, $contactsArr, $rxGroupsArr);
-		$scanListArr = readRDTScanLists($fh, $channelArr);
-		$zoneArr = readRDTZones($fh, $channelArr);
-		$menuItems = readRDTMenuItems($fh);
-		$buttons = readRDTButtonDefinitions($fh, $textMsgArr, $contactsArr);
+		try {
+			$generalSettings = readRDTGeneralSettings($fh);
+			$contactsArr = readRDTContacts($fh);
+			$rxGroupsArr = readRDTRxGroupLists($fh, $contactsArr);
+			$textMsgArr = readRDTTextMessages($fh);
+			$channelArr = readRDTChannel($fh, $contactsArr, $rxGroupsArr);
+			$scanListArr = readRDTScanLists($fh, $channelArr);
+			$zoneArr = readRDTZones($fh, $channelArr);
+			$menuItems = readRDTMenuItems($fh);
+			$buttons = readRDTButtonDefinitions($fh, $textMsgArr, $contactsArr);
 
-		$gClient = getGoogleClient(false);
-		$service = new Google_Service_Sheets($gClient);
-		$metadata = readMetadataFromSpreadsheet($service, $spreadsheetId);
+			$gClient = getGoogleClient(false);
+			$service = new Google_Service_Sheets($gClient);
+			$metadata = readMetadataFromSpreadsheet($service, $spreadsheetId);
 
-		$contactsData = convertToSpreadsheetValuesFromContacts($contactsArr);
-		$rxGroupsData = convertToSpreadsheetValuesFromRxGroupLists($rxGroupsArr);
-		$textMsgData = convertToSpreadsheetValuesFromTextMessages($textMsgArr);
-		$channelData = convertToSpreadsheetValuesFromChannels($channelArr, $metadata[DATA_KEY_CHANNEL_COLUMNS][0], $scanListArr);
-		$scanListData = convertToSpreadsheetValuesFromScanLists($scanListArr);
-		$zoneData = convertToSpreadsheetValuesFromZones($zoneArr);
-		$generalSettingsData = convertToSpreadsheetValuesFromGeneralSettings($generalSettings, $metadata[DATA_KEY_GENERAL_SETTINGS]);
-		$menuItemsData = convertToSpreadsheetValuesFromMenuItems($menuItems, $metadata[DATA_KEY_MENU_ITEMS]);
-		$buttonsData = convertToSpreadsheetValuesFromButtonsDefinitions($buttons, $metadata[DATA_KEY_BUTTON_DEFINITIONS]);
-		
-		$data = array();
-		if (in_array(DATA_KEY_CONTACTS, $importRegionsArr)) {
-			$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_CONTACTS, 'values' => $contactsData));
-		}
-		if (in_array(DATA_KEY_RX_GROUP_LISTS, $importRegionsArr)) {
-			$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_RX_GROUP_LISTS, 'values' => $rxGroupsData));
-		}
-		if (in_array(DATA_KEY_TEXT, $importRegionsArr)) {
-			$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_TEXT, 'values' => $textMsgData));
-		}
-		if (in_array(DATA_KEY_CHANNELS, $importRegionsArr)) {
-			$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_CHANNELS, 'values' => $channelData));
-		}
-		if (in_array(DATA_KEY_SCAN_LISTS, $importRegionsArr)) {
-			$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_SCAN_LISTS, 'values' => $scanListData));
-		}
-		if (in_array(DATA_KEY_ZONES, $importRegionsArr)) {
-			$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_ZONES, 'values' => $zoneData));
-		}
-		if (in_array(DATA_KEY_GENERAL_SETTINGS, $importRegionsArr)) {
-			$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_GENERAL_SETTINGS, 'values' => $generalSettingsData));
-		}
-		if (in_array(DATA_KEY_MENU_ITEMS, $importRegionsArr)) {
-			$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_MENU_ITEMS, 'values' => $menuItemsData));
-		}
-		if (in_array(DATA_KEY_BUTTON_DEFINITIONS, $importRegionsArr)) {
-			$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_BUTTON_DEFINITIONS, 'values' => $buttonsData));
-		}
+			$contactsData = convertToSpreadsheetValuesFromContacts($contactsArr);
+			$rxGroupsData = convertToSpreadsheetValuesFromRxGroupLists($rxGroupsArr);
+			$textMsgData = convertToSpreadsheetValuesFromTextMessages($textMsgArr);
+			$channelData = convertToSpreadsheetValuesFromChannels($channelArr, $metadata[DATA_KEY_CHANNEL_COLUMNS][0], $scanListArr);
+			$scanListData = convertToSpreadsheetValuesFromScanLists($scanListArr);
+			$zoneData = convertToSpreadsheetValuesFromZones($zoneArr);
+			$generalSettingsData = convertToSpreadsheetValuesFromGeneralSettings($generalSettings, $metadata[DATA_KEY_GENERAL_SETTINGS]);
+			$menuItemsData = convertToSpreadsheetValuesFromMenuItems($menuItems, $metadata[DATA_KEY_MENU_ITEMS]);
+			$buttonsData = convertToSpreadsheetValuesFromButtonsDefinitions($buttons, $metadata[DATA_KEY_BUTTON_DEFINITIONS]);
 
-		$body = new Google_Service_Sheets_BatchUpdateValuesRequest(array(
-				'valueInputOption' => 'USER_ENTERED',
-				'data' => $data
-		));
-		$result = $service->spreadsheets_values->batchUpdate($spreadsheetId, $body);
+			$data = array();
+			if (in_array(DATA_KEY_CONTACTS, $importRegionsArr)) {
+				$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_CONTACTS, 'values' => $contactsData));
+			}
+			if (in_array(DATA_KEY_RX_GROUP_LISTS, $importRegionsArr)) {
+				$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_RX_GROUP_LISTS, 'values' => $rxGroupsData));
+			}
+			if (in_array(DATA_KEY_TEXT, $importRegionsArr)) {
+				$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_TEXT, 'values' => $textMsgData));
+			}
+			if (in_array(DATA_KEY_CHANNELS, $importRegionsArr)) {
+				$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_CHANNELS, 'values' => $channelData));
+			}
+			if (in_array(DATA_KEY_SCAN_LISTS, $importRegionsArr)) {
+				$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_SCAN_LISTS, 'values' => $scanListData));
+			}
+			if (in_array(DATA_KEY_ZONES, $importRegionsArr)) {
+				$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_ZONES, 'values' => $zoneData));
+			}
+			if (in_array(DATA_KEY_GENERAL_SETTINGS, $importRegionsArr)) {
+				$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_GENERAL_SETTINGS, 'values' => $generalSettingsData));
+			}
+			if (in_array(DATA_KEY_MENU_ITEMS, $importRegionsArr)) {
+				$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_MENU_ITEMS, 'values' => $menuItemsData));
+			}
+			if (in_array(DATA_KEY_BUTTON_DEFINITIONS, $importRegionsArr)) {
+				$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_BUTTON_DEFINITIONS, 'values' => $buttonsData));
+			}
+
+			$body = new Google_Service_Sheets_BatchUpdateValuesRequest(array(
+					'valueInputOption' => 'USER_ENTERED',
+					'data' => $data
+			));
+			$result = $service->spreadsheets_values->batchUpdate($spreadsheetId, $body);
+		} finally {
+			fclose($fh);
+		}
 	} else {
-		echo "Failed to open file\n";
+		addError("Failed to open file");
 	}
 }
 ?>

@@ -1,23 +1,18 @@
 <?php
+require_once __DIR__ . '/includes/utils.php';
 require_once __DIR__ . '/includes/rdtFunctions.php';
 
 $outputFile = null;
 $baseDocId = lookupDocumentId(isset($_GET['baseFile']) ? $_GET['baseFile'] : null);
-$personalDocId = (isset($_GET['personalFileId']) ? $_GET['personalFileId'] : null);
+$importDocId = (isset($_GET['personalFileId']) ? extractDocumentId($_GET['personalFileId']) : null);
 if ($baseDocId == null) {
 	addError("You must select a base document");
 } else {
 	
-	if ($personalDocId != null && preg_match('/^[-_a-zA-Z0-9]+$/', $personalDocId) === 1) {
-		// no action required
-	} else if ($personalDocId != null && preg_match('/^http.*\/d\/([-_a-zA-Z0-9]+)\/edit.*$/', $personalDocId, $matches) === 1) {
-		// We got the full URL, so extract the doc ID
-		$personalDocId = $matches[1];
-	} else if ($personalDocId != null) {
+	if ($importDocId == null && isset($_GET['baseFile'])) {
 		addError("Invalid personal spreadsheet ID provided");
-		$personalDocId = null;
 	}
-	$outputFile = generateRdtFile($baseDocId, $personalDocId);
+	$outputFile = generateRdtFile($baseDocId, $importDocId);
 }
 $ackHash = calculateAckHash();
 if (count(getErrors()) == 0 &&

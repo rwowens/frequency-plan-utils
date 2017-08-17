@@ -2,17 +2,6 @@
 require_once __DIR__ . '/clientHelper.php';
 require_once __DIR__ . '/utils.php';
 
-define("DATA_KEY_CHANNEL_COLUMNS", 'ChannelColumns');
-define("DATA_KEY_CHANNELS", 'Channels');
-define("DATA_KEY_CONTACTS", 'Contacts');
-define("DATA_KEY_GENERAL_SETTINGS", 'GeneralSettings');
-define("DATA_KEY_MENU_ITEMS", 'MenuItems');
-define("DATA_KEY_BUTTON_DEFINITIONS", 'Buttons');
-define("DATA_KEY_RX_GROUP_LISTS", 'RxGroupLists');
-define("DATA_KEY_SCAN_LISTS", 'ScanLists');
-define("DATA_KEY_TEXT", 'Text');
-define("DATA_KEY_ZONES", 'Zones');
-
 define("ROW_GENERAL_INFO1", "Info Screen Line 1");
 define("ROW_GENERAL_INFO2", "Info Screen Line 2");
 define("ROW_GENERAL_MONITOR_TYPE", "Monitor Type");

@@ -7,6 +7,8 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 </head>
 <?php
+	require_once __DIR__ . '/includes/utils.php';
+
 	define('JSON_FREQ_PLAN_ELEMENT', "Frequency plan");
 	define('JSON_DMR_BASE_ELEMENT', "DMR base");
 ?>
@@ -16,7 +18,7 @@
 		<h1>Frequency Plan Utilities</h1>
 	</div>
 	<div class="row">
-		<div class="col-sm-12 f4">
+		<div class="col-sm-12 h4">
 			<a href="docs">Documentation</a>
 		</div>
 	</div>
@@ -122,8 +124,54 @@
 			</div>
 		</div>
 	</div>
-	<div class="row">
-		<div class="col-sm-12 text-center">
+	<div class="well">
+		<div class="row">
+			<div class="col-sm-12 h3">TYT MD-380 RDT File Import</div>
+		</div>
+		<form method="POST" action="rdtImport.php" id="uploadForm" enctype="multipart/form-data">
+			<input type="hidden" name="MAX_FILE_SIZE" value="262709"/>
+			<div class="form-group col-sm-12">
+				<label for="uploadFileId">Google Drive Spreadsheet shareable link (or document ID) of personal configuration (optional):</label>
+				<input type="text" name="uploadFileId" maxlength="200" class="form-control"/>
+			</div>
+			<div class="form-group col-sm-12">
+				<label for="fileName">
+					<input type="file" name="fileToUpload" id="fileToUpload" class="form-control-file"/>
+				</label>
+			</div>
+			<div class="form-group col-sm-12">
+				<p>Sections to import:</p>
+<?php 
+				$sectionsArr = array(
+						DATA_KEY_GENERAL_SETTINGS => 'General Settings',
+						DATA_KEY_BUTTON_DEFINITIONS => 'Button Definitions',
+						DATA_KEY_CHANNELS => 'Channels',
+						DATA_KEY_CONTACTS => 'Contacts',
+						DATA_KEY_MENU_ITEMS => 'Menu Items',
+						DATA_KEY_RX_GROUP_LISTS => 'Rx Group Lists',
+						DATA_KEY_SCAN_LISTS => 'Scan Lists',
+						DATA_KEY_TEXT => 'Text Messages',
+						DATA_KEY_ZONES => 'Zones',
+				);
+				
+				foreach ( $sectionsArr as $key => $value) {
+?>
+					<div class="form-check">
+						<label class="form-check-label">
+							<input class="form-check-input" type="checkbox" name="sections[]" value="<?php echo $key; ?>"/>
+							<?php echo $value; ?>
+						</label>
+					</div>
+<?php 
+				}
+?>
+			</div>
+			<div class="form-group col-sm-offset-4 col-sm-4">
+				<input type="submit" id="submitUploadBtn" value="Click to Import File" class="form-control btn btn-primary"/>
+			</div>
+		</form>
+		<div class="row">
+			<div class="col-sm-12"></div>
 		</div>
 	</div>
 </div>
