@@ -1,19 +1,7 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="ISO-8859-1">
-<title>Frequency Plan Utilities Documentation</title>
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
-<style type="text/css">
-li { padding-bottom: 20px; }
-</style>
-</head>
-<body>
-	<div class="container">
-		<div class="page-header">
-			<h1>Frequency Plan Utilities Documentation</h1>
-		</div>
+<?php
+define('CURRENT_PAGE', 'docs');
+require('fragments/header.php');
+?>
 		<div class="row">
 			<div class="col-sm-12 h2">DMR</div>
 		</div>
@@ -34,17 +22,17 @@ li { padding-bottom: 20px; }
 				do not have one, you must create one to use the personalization
 				feature of this tool.</p>
 				<p><b>Steps:</b></p>
-				<ol>
+				<ol class="docs">
 					<li>Sign in to <a target="_blank" href="http://drive.google.com/">http://drive.google.com/</a></li>
 					<li>Open the <a target="_blank" href="https://docs.google.com/spreadsheets/d/1XbzGn-9W2ydjr4V35HAWl3rYraKYfxO-EtZEwbM-UTw/">personal template</a></li>
-					<li>Make a copy of the template into your own personal Google Drive space <img src="driveMakeCopy.png" class="img-responsive" alt="Screenshot"/></li>
-					<li>In your new personal copy, click the "Share" button in the upper right corner of the screen <img src="driveShareButton.png" class="img-responsive" alt="Screenshot"/></li>
-					<li>Click "Get sharable link" <img src="driveShareableLink.png" class="img-responsive" alt="Screenshot"/></li>
+					<li>Make a copy of the template into your own personal Google Drive space <img src="docs/driveMakeCopy.png" class="img-responsive" alt="Screenshot"/></li>
+					<li>In your new personal copy, click the "Share" button in the upper right corner of the screen <img src="docs/driveShareButton.png" class="img-responsive" alt="Screenshot"/></li>
+					<li>Click "Get sharable link" <img src="docs/driveShareableLink.png" class="img-responsive" alt="Screenshot"/></li>
 					<li>At this point, you should see a screen saying that link sharing is on.
 					Make sure that it is set so that anyone with the link <b>can view</b>
 					the document. Copy the link URL to your clipboard and then paste it into
 					the personal configuration field of the frequency plan tool form.
-					<img src="driveLinkSharingOn.png" class="img-responsive" alt="Screenshot"/></li>
+					<img src="docs/driveLinkSharingOn.png" class="img-responsive" alt="Screenshot"/></li>
 					<li>Edit the contents of the spreadsheet whenever you wish
 					and provide the shareable link to the frequency plan tool
 					each time you generate a new code plug. Your personal
@@ -53,6 +41,6 @@ li { padding-bottom: 20px; }
 				</ol>
 			</div>
 		</div>
-	</div>
-</body>
-</html>
+<?php 
+require('fragments/footer.php');
+?>

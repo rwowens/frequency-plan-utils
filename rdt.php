@@ -4,12 +4,13 @@ require_once __DIR__ . '/includes/rdtFunctions.php';
 
 $outputFile = null;
 $baseDocId = lookupDocumentId(isset($_GET['baseFile']) ? $_GET['baseFile'] : null);
-$importDocId = (isset($_GET['personalFileId']) ? extractDocumentId($_GET['personalFileId']) : null);
+$isPersonalSet = (isset($_GET['personalFileId']) && trim($_GET['personalFileId']) != '');
+$importDocId = ($isPersonalSet ? extractDocumentId(trim($_GET['personalFileId'])) : null);
 if ($baseDocId == null) {
 	addError("You must select a base document");
 } else {
 	
-	if ($importDocId == null && isset($_GET['baseFile'])) {
+	if ($importDocId == null && $isPersonalSet) {
 		addError("Invalid personal spreadsheet ID provided");
 	}
 	$outputFile = generateRdtFile($baseDocId, $importDocId);

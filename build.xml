@@ -14,6 +14,7 @@
 		<mkdir dir="${dist.dir}/codeplugs"/>
 		<mkdir dir="${dist.dir}/config"/>
 		<mkdir dir="${dist.dir}/includes"/>
+		<mkdir dir="${dist.dir}/fragments"/>
 		<mkdir dir="${dist.dir}/docs"/>
 	</target>
 
@@ -39,12 +40,14 @@
 				<include name="codeplugs/**"/>
 				<include name="config/sheets-example.json"/>
 				<include name="includes/**"/>
+				<include name="fragments/**"/>
 				<include name="docs/**"/>
 			</fileset>
 		</copy>
 		<echo file="${dist.dir}/codeplugs/.htaccess">deny from all</echo>
 		<echo file="${dist.dir}/config/.htaccess">deny from all</echo>
 		<echo file="${dist.dir}/includes/.htaccess">deny from all</echo>
+		<echo file="${dist.dir}/fragments/.htaccess">deny from all</echo>
 	</target>
 
 	<target name="prep-dist-zip" depends="prep-dist-app">
