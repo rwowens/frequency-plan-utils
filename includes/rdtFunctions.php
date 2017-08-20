@@ -467,30 +467,6 @@ function writeRDTDigitalContact(&$fh, $contactNum, $callId, $callType, $name, $r
 	fwrite($fh, $data);
 }
 
-function unicodeCharToBinValue($chr) {
-	return $chr === 0 ? 0 : ord($chr);
-}
-
-function unicodeBinValueToChar($bin) {
-	return $bin === 0 ? 0 : chr($bin);
-}
-
-function createUnicodeStrArr($str, $length) {
-	$strArr = str_split($str);
-	while (count($strArr) < $length) {
-		$strArr[count($strArr)] = 0;
-	}
-	return $strArr;
-}
-
-function decodeUnicodeStr(&$valArray, $arrayKeyPrefix, $maxLength) {
-	$val = '';
-	for ($i = 1; $i <= $maxLength && $valArray[$arrayKeyPrefix.$i] != 0; $i++) {
-		$val = $val . chr($valArray[$arrayKeyPrefix.$i]);
-	}
-	return $val;
-}
-
 function writeRDTRxGroupList($fh, $groupListNum, $name, $contactArr) {
 	fseek($fh, 0xEE45 + (96 * ($groupListNum-1)));
 	$nameArr = createUnicodeStrArr($name, 16);

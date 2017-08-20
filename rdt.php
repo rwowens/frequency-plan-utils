@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/utils.php';
-require_once __DIR__ . '/includes/rdtFunctions.php';
+require_once __DIR__ . '/spreadsheetFunctions.php';
 
 $outputFile = null;
 $baseDocId = lookupDocumentId(isset($_GET['baseFile']) ? $_GET['baseFile'] : null);
@@ -9,18 +9,26 @@ $importDocId = ($isPersonalSet ? extractDocumentId(trim($_GET['personalFileId'])
 if ($baseDocId == null) {
 	addError("You must select a base document");
 } else {
-	
+	$radioModel = $_GET['radioModel'];
+	$sendFileName = 'ares_custom.dat';
 	if ($importDocId == null && $isPersonalSet) {
 		addError("Invalid personal spreadsheet ID provided");
+	} else if ($radioModel == 'tyt') {
+		require_once __DIR__ . '/includes/rdtFunctions.php';
+		$outputFile = generateRdtFile($baseDocId, $importDocId);
+		$sendFileName = 'ares_custom.rdt';
+	} else if ($radioModel == 'cs800') {
+		require_once __DIR__ . '/includes/rdbFunctions.php';
+		$outputFile = generateRdbFile($baseDocId, $importDocId);
+		$sendFileName = 'ares_custom.rdb';
 	}
-	$outputFile = generateRdtFile($baseDocId, $importDocId);
 }
 $ackHash = calculateAckHash();
 if (count(getErrors()) == 0 &&
 		(count(getWarnings()) == 0 ||
 		(isset($_GET['ackHash']) && $_GET['ackHash'] == $ackHash))) {
 	header('Content-Type: application/octet-stream');
-	header('Content-Disposition: attachment; filename="ares_custom.rdt"');
+	header('Content-Disposition: attachment; filename="'.$sendFileName.'"');
 	readfile($outputFile);
 } else {
 ?>
