@@ -1473,11 +1473,15 @@ function importRDTFile($fileName, $spreadsheetId, $importRegionsArr) {
 				$data[] = new Google_Service_Sheets_ValueRange(array('range' => DATA_KEY_BUTTON_DEFINITIONS, 'values' => $buttonsData));
 			}
 
-			$body = new Google_Service_Sheets_BatchUpdateValuesRequest(array(
-					'valueInputOption' => 'USER_ENTERED',
-					'data' => $data
-			));
-			$result = $service->spreadsheets_values->batchUpdate($spreadsheetId, $body);
+			try {
+				$body = new Google_Service_Sheets_BatchUpdateValuesRequest(array(
+						'valueInputOption' => 'USER_ENTERED',
+						'data' => $data
+				));
+				$result = $service->spreadsheets_values->batchUpdate($spreadsheetId, $body);
+			} catch (Google_Service_Exception $e) {
+				addError('Failed to update spreadsheet. Is it publicly writable?');
+			}
 		} finally {
 			fclose($fh);
 		}
