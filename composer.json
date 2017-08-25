@@ -4,7 +4,8 @@
 		"google/apiclient" : "^2.0"
 	},
 	"require-dev" : {
-		"phing/phing" : "2.*"
+		"phing/phing" : "2.*",
+		"phpunit/phpunit": "^4.8"
 	},
 	"authors" : [{
 			"name" : "Ryan Owens"

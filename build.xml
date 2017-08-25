@@ -50,6 +50,17 @@
 		<echo file="${dist.dir}/fragments/.htaccess">deny from all</echo>
 	</target>
 
+	<target name="run-tests">
+		<phpunit bootstrap="includes/autoload.php" haltonfailure="true" haltonerror="true">
+			<formatter type="plain" usefile="false" />
+			<batchtest>
+				<fileset dir="tests">
+					<include name="**/*Test*.php" />
+				</fileset>
+			</batchtest>
+		</phpunit>
+	</target>
+
 	<target name="prep-dist-zip" depends="prep-dist-app">
 		<zip destfile="${dist.zip}">
 			<fileset dir="${dist.dir}">
