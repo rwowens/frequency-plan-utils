@@ -7,7 +7,9 @@ require('fragments/header.php');
 			into a Google Drive spreadsheet. The target spreadsheet must be a copy
 			of the personal configuration template in order for this to work.
 			Refer to the documentation for instructions for creating a personal
-			configuration sheet from the template.</p>
+			configuration sheet from the template. You must also temporarily make
+			the target spreadsheet <b>publicly writable</b> via the sharing link
+			in order for this site to update your spreadsheet.</p>
 			<p>Currently only TYT MD-380 format RDT files are supported. Provide
 			the ID or link to a personal configuration spreadsheet to load the
 			data into then select an RDT file to load and the sections you wish
