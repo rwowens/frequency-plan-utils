@@ -24,7 +24,7 @@ require('fragments/header.php');
 				<p><b>Steps:</b></p>
 				<ol class="docs">
 					<li>Sign in to <a target="_blank" href="http://drive.google.com/">http://drive.google.com/</a></li>
-					<li>Open the <a target="_blank" href="https://docs.google.com/spreadsheets/d/1XbzGn-9W2ydjr4V35HAWl3rYraKYfxO-EtZEwbM-UTw/">personal template</a></li>
+					<li>Open the <a target="_blank" href="<?php echo PERSONAL_CONFIG_TEMPLATE; ?>">personal template</a></li>
 					<li>Make a copy of the template into your own personal Google Drive space <img src="docs/driveMakeCopy.png" class="img-responsive" alt="Screenshot"/></li>
 					<li>In your new personal copy, click the "Share" button in the upper right corner of the screen <img src="docs/driveShareButton.png" class="img-responsive" alt="Screenshot"/></li>
 					<li>Click "Get sharable link" <img src="docs/driveShareableLink.png" class="img-responsive" alt="Screenshot"/></li>

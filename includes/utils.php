@@ -12,6 +12,8 @@ define("DATA_KEY_SCAN_LISTS", 'ScanLists');
 define("DATA_KEY_TEXT", 'Text');
 define("DATA_KEY_ZONES", 'Zones');
 
+define("PERSONAL_CONFIG_TEMPLATE", 'https://docs.google.com/spreadsheets/d/1XbzGn-9W2ydjr4V35HAWl3rYraKYfxO-EtZEwbM-UTw/');
+
 spl_autoload_register(function ($class_name) {
 	include 'classes/' . $class_name . '.php';
 });

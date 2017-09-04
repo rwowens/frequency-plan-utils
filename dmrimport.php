@@ -5,7 +5,7 @@ require('fragments/header.php');
 		<div class="well">
 			<p>This tool will read an RDT file and import values from that file
 			into a Google Drive spreadsheet. The target spreadsheet must be a copy
-			of the personal configuration template in order for this to work.
+			of the <a href="<?php echo PERSONAL_CONFIG_TEMPLATE; ?>" target="_blank">personal configuration template</a> in order for this to work.
 			Refer to the documentation for instructions for creating a personal
 			configuration sheet from the template. You must also temporarily make
 			the target spreadsheet <b>publicly writable</b> via the sharing link

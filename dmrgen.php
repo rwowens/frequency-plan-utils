@@ -25,7 +25,7 @@ require('fragments/header.php');
 			</div>
 			<div class="form-group col-sm-12">
 				<label for="personalFileId">Google Drive Spreadsheet shareable link (or document ID) of personal configuration (optional):
-				<a href="#" data-toggle="popover" title="What is this?" data-trigger="focus" data-placement="top" data-content="You may enter the Google Drive spreadsheet shareable link or ID of your personal DMR configuration sheet here. Information in your personal sheet will augment information in the base sheet. To obtain the spreadsheet shareable link, make a copy of <a href='https://docs.google.com/spreadsheets/d/1XbzGn-9W2ydjr4V35HAWl3rYraKYfxO-EtZEwbM-UTw/edit?usp=sharing' target='_blank'>this template</a> in to your personal Google Drive, add content to it as you wish (but do not change the layout of it or the named range definitions!), then click the &quot;Share&quot; button in the upper right of the spreadsheet page and get the shareable link. The link will look something like this: https://docs.google.com/spreadsheets/d/<u>1XbzGn-9W2ydjr4V35HAWl3rYraKYfxO-EtZEwbM-UTw</u>/edit?usp=sharing. The underlined portion is the spreadsheet ID.">[?]</a></label>
+				<a href="#" data-toggle="popover" title="What is this?" data-trigger="focus" data-placement="top" data-content="Refer to the <a href='documentation.php' target='_blank'>documentation</a> for details.">[?]</a></label>
 				<input type="text" name="personalFileId" maxlength="200" class="form-control"/>
 			</div>
 			<div class="form-group col-sm-12">
