@@ -1,4 +1,6 @@
 <?php
+use RadioModels\CS800FileUtils;
+
 require_once __DIR__ . '/includes/utils.php';
 require_once __DIR__ . '/includes/spreadsheetFunctions.php';
 
@@ -18,8 +20,8 @@ if ($baseDocId == null) {
 		$outputFile = generateRdtFile($baseDocId, $importDocId);
 		$sendFileName = 'ares_custom.rdt';
 	} else if ($radioModel == 'cs800') {
-		require_once __DIR__ . '/includes/rdbFunctions.php';
-		$outputFile = generateRdbFile($baseDocId, $importDocId);
+		$cs800FileUtils = new CS800FileUtils();
+		$outputFile = $cs800FileUtils->generateRadioFile($baseDocId, $importDocId);
 		$sendFileName = 'ares_custom.rdb';
 	}
 }

@@ -84,4 +84,39 @@ function decodeUnicodeStr(&$valArray, $arrayKeyPrefix, $maxLength) {
 	return $val;
 }
 
-?>
+function createToneBCDT($toneValue) {
+	if ($toneValue == '') {
+		return 0xFFFF;
+	}
+	$retval = 0x00;
+	$digits = '';
+	if (substr($toneValue, 0, 1) == 'D') {
+		if (substr($toneValue, 4, 1) == 'N') {
+			$retval += 0x8000;
+		} else {
+			$retval += 0XC000;
+		}
+		$digits = '0'.substr($toneValue, 1, 3);
+	} else {
+		$parts = explode('.', $toneValue);
+		if (strlen($parts[0]) < 3) {
+			$parts[0] = str_pad($parts[0], 3, '0', STR_PAD_LEFT);
+		}
+		if (strlen($parts[0]) > 3) {
+			$parts[0] = substr($parts[0], 0, 3);
+		}
+		if (count($parts) < 2) {
+			$parts[1] = '0';
+		}
+		if (strlen($parts[1]) > 1) {
+			$parts[1] = substr($parts[1], 0, 1);
+		}
+		$digits = $parts[0] . $parts[1];
+	}
+	$digitArr = str_split($digits);
+	$retval |= $digitArr[0] << 12;
+	$retval |= $digitArr[1] << 8;
+	$retval |= $digitArr[2] << 4;
+	$retval |= $digitArr[3];
+	return $retval;
+}
