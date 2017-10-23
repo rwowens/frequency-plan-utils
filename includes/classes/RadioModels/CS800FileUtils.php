@@ -14,14 +14,14 @@ class CS800FileUtils implements \RadioFileUtils {
 		$genFile = tempnam(sys_get_temp_dir(), 'RDB');
 		copy($templateFile, $genFile);
 		if ($fh = fopen($genFile, 'rb+')) {
-	// 		writeRDTGeneralSettings($fh, $spreadsheetData->getGeneralSettings());
+			$this->writeGeneralSettings($fh, $spreadsheetData->getGeneralSettings());
 	// 		writeRDTMenuItems($fh, $spreadsheetData->getMenuItemsMap());
 	// 		writeRDTButtonDefinitions($fh, $spreadsheetData->getButtonDefinitions(), $spreadsheetData->getTextMessageArray(), $spreadsheetData->getContactArray());
 			$this->writeContacts($fh, $spreadsheetData->getContactArray());
-	// 		writeRxGroupLists($fh, $spreadsheetData->getRxGroupListArray(), $spreadsheetData->getContactArray());
-	 		$this->writeChannels($fh, $spreadsheetData->getChannelArray(), $spreadsheetData->getContactArray(), $spreadsheetData->getScanListArray(), $spreadsheetData->getRxGroupListArray());
-	// 		writeScanLists($fh, $spreadsheetData->getScanListArray(), $spreadsheetData->getChannelArray());
-	// 		writeZoneInfoList($fh, $spreadsheetData->getZoneInfoArray(), $spreadsheetData->getChannelArray());
+			$this->writeRxGroupLists($fh, $spreadsheetData->getRxGroupListArray(), $spreadsheetData->getContactArray());
+			$this->writeChannels($fh, $spreadsheetData->getChannelArray(), $spreadsheetData->getContactArray(), $spreadsheetData->getScanListArray(), $spreadsheetData->getRxGroupListArray(), $spreadsheetData->getScanListArray());
+			$this->writeScanLists($fh, $spreadsheetData->getScanListArray(), $spreadsheetData->getChannelArray());
+			$this->writeZones($fh, $spreadsheetData->getZoneInfoArray(), $spreadsheetData->getChannelArray());
 	// 		writeTextMessageList($fh, $spreadsheetData->getTextMessageArray());
 			
 			fclose($fh);
@@ -90,16 +90,81 @@ class CS800FileUtils implements \RadioFileUtils {
 		return $outArr;
 	}
 
-	protected function writeChannels($fh, &$channelArr, &$contactArr, &$scanListArr, &$rxGroupListArr) {
+	protected function writeGeneralSettings($fh, &$generalSettings) {
+		fseek($fh, 0x2200);
+		$nameArr = createUnicodeStrArr($generalSettings->getInfoScreenLine1(), 16);
+		$data = pack("vvvvvvvvvvvvvvvv",
+				unicodeCharToBinValue($nameArr[0]),
+				unicodeCharToBinValue($nameArr[1]),
+				unicodeCharToBinValue($nameArr[2]),
+				unicodeCharToBinValue($nameArr[3]),
+				unicodeCharToBinValue($nameArr[4]),
+				unicodeCharToBinValue($nameArr[5]),
+				unicodeCharToBinValue($nameArr[6]),
+				unicodeCharToBinValue($nameArr[7]),
+				unicodeCharToBinValue($nameArr[8]),
+				unicodeCharToBinValue($nameArr[9]),
+				unicodeCharToBinValue($nameArr[10]),
+				unicodeCharToBinValue($nameArr[11]),
+				unicodeCharToBinValue($nameArr[12]),
+				unicodeCharToBinValue($nameArr[13]),
+				unicodeCharToBinValue($nameArr[14]),
+				unicodeCharToBinValue($nameArr[15])
+				);
+		fwrite($fh, $data);
+
+		fseek($fh, 0x2228);
+		$nameArr = createUnicodeStrArr($generalSettings->getInfoScreenLine2(), 16);
+		$data = pack("vvvvvvvvvvvvvvvv",
+				unicodeCharToBinValue($nameArr[0]),
+				unicodeCharToBinValue($nameArr[1]),
+				unicodeCharToBinValue($nameArr[2]),
+				unicodeCharToBinValue($nameArr[3]),
+				unicodeCharToBinValue($nameArr[4]),
+				unicodeCharToBinValue($nameArr[5]),
+				unicodeCharToBinValue($nameArr[6]),
+				unicodeCharToBinValue($nameArr[7]),
+				unicodeCharToBinValue($nameArr[8]),
+				unicodeCharToBinValue($nameArr[9]),
+				unicodeCharToBinValue($nameArr[10]),
+				unicodeCharToBinValue($nameArr[11]),
+				unicodeCharToBinValue($nameArr[12]),
+				unicodeCharToBinValue($nameArr[13]),
+				unicodeCharToBinValue($nameArr[14]),
+				unicodeCharToBinValue($nameArr[15])
+				);
+		fwrite($fh, $data);
+
+		fseek($fh, 0x2220);
+		$data = pack("CCC",
+				($generalSettings->getRadioId() & 0x0000FF),
+				($generalSettings->getRadioId() & 0x00FF00) >> 8,
+				($generalSettings->getRadioId() & 0xFF0000) >> 16);
+		fwrite($fh, $data);
+	}
+
+	protected function writeChannels($fh, &$channelArr, &$contactArr, &$scanListArr, &$rxGroupListArr, &$scanListArr) {
 		$channelCount = count($channelArr);
 
 		for ($channelRowNum = 0; $channelRowNum < $channelCount; $channelRowNum++) {
 			$channel = $channelArr[$channelRowNum];
-			$this->writeChannel($fh, $channel, $channelRowNum+1, $rxGroupListArr, $contactArr);
+			$this->writeChannel($fh, $channel, $channelRowNum+1, $rxGroupListArr, $contactArr, $scanListArr);
 		}
+
+		fseek($fh, 0x21F60);
+		$data = pack("v", $channelCount);
+		fwrite($fh, $data);
+
+		fseek($fh, 0x2064);
+		$data = pack("v", 0x4000 | (count($contactArr) << 4));
+		fwrite($fh, $data);
 	}
 
-	protected function writeChannel($fh, $channel, $channelNum, &$rxGroupListArr, &$contactArr) {
+	protected function writeChannel($fh, $channel, $channelNum, &$rxGroupListArr, &$contactArr, &$scanListArr) {
+		fseek($fh, 0x21F60 + (2 * $channelNum));
+		$data = pack("v", $channelNum);
+		fwrite($fh, $data);
+
 		fseek($fh, 0xA000 + (0x10 * ($channelNum-1)));
 		$nameArr = $this->convertStringToCSCode($channel->getChannelName(), 16);
 		$data = pack("CCCCCCCCCCCC",
@@ -180,7 +245,11 @@ class CS800FileUtils implements \RadioFileUtils {
 
 		$totVal = max(0, min($channel->getTot() / 15, 0x21)); // Max value if 495s
 
-		$scanListIndex = 0xFFFF; // FIXME
+		$scanListIndex = findScanListIndex($scanListArr, $channel->getScanListName());
+		if ($scanListIndex == 0) {
+			$scanListIndex = 0xFFFF;
+		}
+
 		$totPreAlert = 0; // FIXME
 		if ($channel->getMode() == 'Digital') {
 			$colorCodeBytes = max(0, min(15, $channel->getColorCode()));
@@ -190,7 +259,7 @@ class CS800FileUtils implements \RadioFileUtils {
 			if ($channel->isDataCallConf()) {
 				$colorCodeBytes |= 0b10000000;
 			}
-			if ($channel->isPrivateCallConf() && $chanel->getAdmitCriteria() != 'Always') {
+			if ($channel->isPrivateCallConf() && $channel->getAdmitCriteria() != 'Always') {
 				$colorCodeBytes |= 0b00100000;
 			}
 			$txCtcss = 0;
@@ -232,7 +301,7 @@ class CS800FileUtils implements \RadioFileUtils {
 		fwrite($fh, $data);
 	}
 
-	protected function writeContacts($fh, &$contactArr) {
+	protected function writeContacts(&$fh, &$contactArr) {
 		$contactCount = min(count($contactArr), 1000);
 		fseek($fh, 0x9568);
 		$data = pack("v", $contactCount);
@@ -283,5 +352,232 @@ class CS800FileUtils implements \RadioFileUtils {
 			$flags
 			);
 		fwrite($fh, $data);
+	}
+
+	protected function writeRxGroupLists(&$fh, $rxGroupArr, &$contactArr) {
+		$groupCount = min(count($rxGroupArr), 250);
+
+		// Write group count
+		fseek($fh, 0x93E8);
+		$data = pack("v", $groupCount);
+		fwrite($fh, $data);
+
+		// Write list of group indices
+		fseek($fh, 0x93EA);
+		for ($rxGroupRowNum = 1; $rxGroupRowNum <= $groupCount; $rxGroupRowNum++) {
+			$data = pack("C", $rxGroupRowNum);
+			fwrite($fh, $data);
+		}
+
+		// Write group details
+		for ($rxGroupRowNum = 0; $rxGroupRowNum < $groupCount; $rxGroupRowNum++) {
+			$group = $rxGroupArr[$rxGroupRowNum];
+			$this->writeRxGroupList($fh, $rxGroupRowNum+1, $group->getGroupListName(), $group->getContactNames(), $contactArr);
+		}
+	}
+
+	protected function writeRxGroupList(&$fh, $rxGroupListNum, $rxGroupListName, &$contactNameArr, &$contactArr) {
+		$groupOffset = (100 * ($rxGroupListNum-1));
+		fseek($fh, 0x3000 + $groupOffset);
+
+		$nameArr = createUnicodeStrArr($rxGroupListName, 16);
+		$data = pack("CCCCvvvvvvvvvvvvvvvv",
+				count($contactNameArr), 0, 0, 0,
+				unicodeCharToBinValue($nameArr[0]),
+				unicodeCharToBinValue($nameArr[1]),
+				unicodeCharToBinValue($nameArr[2]),
+				unicodeCharToBinValue($nameArr[3]),
+				unicodeCharToBinValue($nameArr[4]),
+				unicodeCharToBinValue($nameArr[5]),
+				unicodeCharToBinValue($nameArr[6]),
+				unicodeCharToBinValue($nameArr[7]),
+				unicodeCharToBinValue($nameArr[8]),
+				unicodeCharToBinValue($nameArr[9]),
+				unicodeCharToBinValue($nameArr[10]),
+				unicodeCharToBinValue($nameArr[11]),
+				unicodeCharToBinValue($nameArr[12]),
+				unicodeCharToBinValue($nameArr[13]),
+				unicodeCharToBinValue($nameArr[14]),
+				unicodeCharToBinValue($nameArr[15])
+				);
+		fwrite($fh, $data);
+
+		$contactCount = 0;
+		foreach ($contactNameArr as $contactName) {
+			$data = pack("v",
+					findContactNameIndex($contactArr, $contactName));
+			fwrite($fh, $data);
+			$contactCount++;
+			if ($contactCount >= 32) {
+				break;
+			}
+		}
+	}
+
+	protected function writeZones(&$fh, $zoneArr, &$channelArr) {
+		$zoneCount = min(count($zoneArr), 250);
+		for ($zoneRowNum = 0; $zoneRowNum < $zoneCount; $zoneRowNum++) {
+			$zone = $zoneArr[$zoneRowNum];
+			$this->writeZone($fh, $zoneRowNum+1, $zone->getZoneName(), $zone->getChannelNames(), $channelArr);
+		}
+	}
+	
+	protected function writeZone(&$fh, $zoneNum, $zoneName, $channelNameArr, &$channelArr) {
+		$zoneOffset = (80 * ($zoneNum-1));
+		fseek($fh, 0x26000 + $zoneOffset);
+		
+		$nameArr = createUnicodeStrArr($zoneName, 16);
+		$data = pack("vvvvvvvvvvvvvvvv",
+				unicodeCharToBinValue($nameArr[0]),
+				unicodeCharToBinValue($nameArr[1]),
+				unicodeCharToBinValue($nameArr[2]),
+				unicodeCharToBinValue($nameArr[3]),
+				unicodeCharToBinValue($nameArr[4]),
+				unicodeCharToBinValue($nameArr[5]),
+				unicodeCharToBinValue($nameArr[6]),
+				unicodeCharToBinValue($nameArr[7]),
+				unicodeCharToBinValue($nameArr[8]),
+				unicodeCharToBinValue($nameArr[9]),
+				unicodeCharToBinValue($nameArr[10]),
+				unicodeCharToBinValue($nameArr[11]),
+				unicodeCharToBinValue($nameArr[12]),
+				unicodeCharToBinValue($nameArr[13]),
+				unicodeCharToBinValue($nameArr[14]),
+				unicodeCharToBinValue($nameArr[15])
+				);
+		fwrite($fh, $data);
+		
+		fseek($fh, 0x26024 + $zoneOffset);
+		$data = pack("CCC",
+				count($channelNameArr),
+				0x01,
+				0x00);
+		fwrite($fh, $data);
+		
+		fseek($fh, 0x26030 + $zoneOffset);
+		foreach ($channelNameArr as $channelName) {
+			$channelIndex = findChannelNameIndex($channelArr, $channelName);
+			$data = pack("v", $channelIndex);
+			fwrite($fh, $data);
+		}
+	}
+
+	protected function writeScanLists(&$fh, $scanListArr, &$channelArr) {
+		$listCount = min(count($scanListArr), 250);
+
+		// Write scan list count
+		fseek($fh, 0x33500);
+		$data = pack("v", $listCount);
+		fwrite($fh, $data);
+
+		// Write list of scan list indices
+		fseek($fh, 0x33502);
+		for ($scanListArrRowNum = 1; $scanListArrRowNum <= $listCount; $scanListArrRowNum++) {
+			$data = pack("C", $scanListArrRowNum);
+			fwrite($fh, $data);
+		}
+
+		// Write scan list details
+		for ($scanListArrRowNum = 0; $scanListArrRowNum < $listCount; $scanListArrRowNum++) {
+			$list = $scanListArr[$scanListArrRowNum];
+			$this->writeScanList($fh, $scanListArrRowNum+1, $list, $channelArr);
+		}
+	}
+	
+	protected function writeScanList(&$fh, $scanListNum, &$scanList, &$channelArr) {
+		$scanListOffset = (128 * ($scanListNum-1));
+		fseek($fh, 0x2C000 + $scanListOffset);
+		
+		$nameArr = createUnicodeStrArr($scanList->getScanListName(), 16);
+		$data = pack("vvvvvvvvvvvvvvvv",
+				unicodeCharToBinValue($nameArr[0]),
+				unicodeCharToBinValue($nameArr[1]),
+				unicodeCharToBinValue($nameArr[2]),
+				unicodeCharToBinValue($nameArr[3]),
+				unicodeCharToBinValue($nameArr[4]),
+				unicodeCharToBinValue($nameArr[5]),
+				unicodeCharToBinValue($nameArr[6]),
+				unicodeCharToBinValue($nameArr[7]),
+				unicodeCharToBinValue($nameArr[8]),
+				unicodeCharToBinValue($nameArr[9]),
+				unicodeCharToBinValue($nameArr[10]),
+				unicodeCharToBinValue($nameArr[11]),
+				unicodeCharToBinValue($nameArr[12]),
+				unicodeCharToBinValue($nameArr[13]),
+				unicodeCharToBinValue($nameArr[14]),
+				unicodeCharToBinValue($nameArr[15])
+				);
+		fwrite($fh, $data);
+
+		$priChan1 = 0xFFFF; // None
+		if ($scanList->getPriorityChannel1() === 'Selected') {
+			$priChan1 = 0x0000;
+		} else if ($scanList->getPriorityChannel1() === 'None') {
+			$priChan1 = 0xFFFF;
+		} else {
+			$foundChan = findChannelNameIndex($channelArr, $scanList->getPriorityChannel1());
+			if ($foundChan != 0) {
+				$priChan1 = $foundChan;
+			} else {
+				addWarning("Priority channel 1 for scan list ".htmlspecialchars($scanList->getScanListName())." was not matched");
+			}
+		}
+
+		$priChan2 = 0xFFFF; // None
+		if ($scanList->getPriorityChannel2() === 'Selected') {
+			$priChan2 = 0x0000;
+		} else if ($scanList->getPriorityChannel2() === 'None') {
+			$priChan2 = 0xFFFF;
+		} else {
+			$foundChan = findChannelNameIndex($channelArr, $scanList->getPriorityChannel2());
+			if ($foundChan != 0) {
+				$priChan2 = $foundChan;
+			} else {
+				addWarning("Priority channel 2 for scan list ".htmlspecialchars($scanList->getScanListName())." was not matched");
+			}
+		}
+
+		$txChan = 0x0000; // Selected
+		if ($scanList->getTxDesignatedChannel() === 'Selected') {
+			$txChan= 0x0000;
+		} else if ($scanList->getTxDesignatedChannel() === 'Last') {
+			$txChan= 0xFFFF;
+		} else {
+			$foundChan = findChannelNameIndex($channelArr, $scanList->getTxDesignatedChannel());
+			if ($foundChan != 0) {
+				$txChan= $foundChan;
+			} else {
+				addWarning("Priority channel 2 for scan list ".htmlspecialchars($scanList->getScanListName())." was not matched");
+			}
+		}
+
+		$signalHoldTime = max(min($scanList->getSignalHoldTime() / 25, 0xFF), 0x02);
+
+		$data = pack("vvvCC",
+				$priChan1, $priChan2, $txChan,
+				min(count($scanList->getChannelNames()), 32),
+				$signalHoldTime
+				);
+		fwrite($fh, $data);
+
+		fseek($fh, 0x2C029 + $scanListOffset);
+		$data = pack("CCC",
+				0x0D, // TODO: Various flags
+				0x14, // TODO: Loop Back Time A
+				0x14 // TODO: Loop Back Time B
+			);
+		fwrite($fh, $data);
+
+		fseek($fh, 0x2C042 + $scanListOffset);
+		$channelArrCount = 0;
+		foreach ($scanList->getChannelNames() as $channelName) {
+			$data = pack("v",
+					findChannelNameIndex($channelArr, $channelName));
+			fwrite($fh, $data);
+			$channelArrCount++;
+			if ($channelArrCount >= 32) {
+				break;
+			}
+		}
 	}
 }
