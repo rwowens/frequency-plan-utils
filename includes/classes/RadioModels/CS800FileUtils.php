@@ -14,14 +14,21 @@ class CS800FileUtils implements \RadioFileUtils {
 		$genFile = tempnam(sys_get_temp_dir(), 'RDB');
 		copy($templateFile, $genFile);
 		if ($fh = fopen($genFile, 'rb+')) {
-			$this->writeGeneralSettings($fh, $spreadsheetData->getGeneralSettings());
+			$contactArr = $spreadsheetData->getContactArray();
+			$rxGrpListArr = $spreadsheetData->getRxGroupListArray();
+			$chanArr = $spreadsheetData->getChannelArray();
+			$scanListArr = $spreadsheetData->getScanListArray();
+			$genSettings = $spreadsheetData->getGeneralSettings();
+			$zoneInfoArr = $spreadsheetData->getZoneInfoArray();
+
+			$this->writeGeneralSettings($fh, $genSettings);
 	// 		writeRDTMenuItems($fh, $spreadsheetData->getMenuItemsMap());
 	// 		writeRDTButtonDefinitions($fh, $spreadsheetData->getButtonDefinitions(), $spreadsheetData->getTextMessageArray(), $spreadsheetData->getContactArray());
-			$this->writeContacts($fh, $spreadsheetData->getContactArray());
-			$this->writeRxGroupLists($fh, $spreadsheetData->getRxGroupListArray(), $spreadsheetData->getContactArray());
-			$this->writeChannels($fh, $spreadsheetData->getChannelArray(), $spreadsheetData->getContactArray(), $spreadsheetData->getScanListArray(), $spreadsheetData->getRxGroupListArray(), $spreadsheetData->getScanListArray());
-			$this->writeScanLists($fh, $spreadsheetData->getScanListArray(), $spreadsheetData->getChannelArray());
-			$this->writeZones($fh, $spreadsheetData->getZoneInfoArray(), $spreadsheetData->getChannelArray());
+			$this->writeContacts($fh, $contactArr);
+			$this->writeRxGroupLists($fh, $rxGrpListArr, $contactArr);
+			$this->writeChannels($fh, $chanArr, $contactArr, $scanListArr, $rxGrpListArr);
+			$this->writeScanLists($fh, $scanListArr, $chanArr);
+			$this->writeZones($fh, $zoneInfoArr, $chanArr);
 	// 		writeTextMessageList($fh, $spreadsheetData->getTextMessageArray());
 			
 			fclose($fh);
@@ -143,7 +150,7 @@ class CS800FileUtils implements \RadioFileUtils {
 		fwrite($fh, $data);
 	}
 
-	protected function writeChannels($fh, &$channelArr, &$contactArr, &$scanListArr, &$rxGroupListArr, &$scanListArr) {
+	protected function writeChannels($fh, &$channelArr, &$contactArr, &$scanListArr, &$rxGroupListArr) {
 		$channelCount = count($channelArr);
 
 		for ($channelRowNum = 0; $channelRowNum < $channelCount; $channelRowNum++) {
@@ -299,6 +306,40 @@ class CS800FileUtils implements \RadioFileUtils {
 				$txContactIndex // Offset 0x18
 			);
 		fwrite($fh, $data);
+
+		if ($channel->getMode() != 'Digital') {
+			$rxSquelchMode = 0x00;
+			switch ($channel->getRxSquelchMode()) {
+				case 'CTCSS/DCS and Audio': $rxSquelchMode = 0x00; break;
+				case 'Audio': $rxSquelchMode = 0x00; break;
+				case 'CTCSS/DCS': $rxSquelchMode = 0x02; break;
+				case 'Carrier': $rxSquelchMode = 0x03; break;
+			}
+
+			if ($channel->getChannelSwitchSquelchMode() == 'Monitor Squelch Mode') {
+				$rxSquelchMode |= 0b01000000;
+			}
+
+			if ($channel->getMonitorSquelchMode() == 'CTCSS/CDCSS') {
+				$rxSquelchMode |= 0b00010000;
+			}
+
+			$toneType = 0x00;
+			switch($channel->getRxToneType()) {
+				case 'CTCSS': $toneType |= 0x01; break;
+				case 'CDCSS': $toneType |= 0x02; break;
+				case 'CDCSS Invert': $toneType |= 0x03; break;
+			}
+
+			switch($channel->getTxToneType()) {
+				case 'CTCSS': $toneType |= 0b00000100; break;
+				case 'CDCSS': $toneType |= 0b00001000; break;
+				case 'CDCSS Invert': $toneType |= 0b00001100; break;
+			}
+
+			$data = pack("vv", $rxSquelchMode, $toneType);
+			fwrite($fh, $data);
+		}
 	}
 
 	protected function writeContacts(&$fh, &$contactArr) {
@@ -372,7 +413,9 @@ class CS800FileUtils implements \RadioFileUtils {
 		// Write group details
 		for ($rxGroupRowNum = 0; $rxGroupRowNum < $groupCount; $rxGroupRowNum++) {
 			$group = $rxGroupArr[$rxGroupRowNum];
-			$this->writeRxGroupList($fh, $rxGroupRowNum+1, $group->getGroupListName(), $group->getContactNames(), $contactArr);
+			$grpListName = $group->getGroupListName();
+			$contactNames = $group->getContactNames();
+			$this->writeRxGroupList($fh, $rxGroupRowNum+1, $grpListName, $contactNames, $contactArr);
 		}
 	}
 

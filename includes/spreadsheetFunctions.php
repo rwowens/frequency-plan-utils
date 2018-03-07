@@ -127,6 +127,11 @@ define("COL_CHANNEL_CTCSS_DCS_DECODE", "CTCSS DCS Decode");
 define("COL_CHANNEL_CTCSS_DCS_ENCODE", "CTCSS DCS Encode");
 define("COL_CHANNEL_TX_SIGNALING_SYSTEM", "Tx Signaling System");
 define("COL_CHANNEL_RX_SIGNALING_SYSTEM", "Rx Signaling System");
+define("COL_CHANNEL_CHANNEL_SWITCH_SQUELCH_MODE", "Ch Switch Sql Mode");
+define("COL_CHANNEL_MONITOR_SQUELCH_MODE", "Monitor Sql Mode");
+define("COL_CHANNEL_RX_TONE_TYPE", "Rx Tone Type");
+define("COL_CHANNEL_TX_TONE_TYPE", "Tx Tone Type");
+define("COL_CHANNEL_RX_SQUELCH_MODE", "Rx Sql Mode");
 
 function findContactNameIndex(&$contactArr, $contactName) {
 	$rowNum = 1;
@@ -461,7 +466,14 @@ function processChannelRows(&$channelArr, $values, &$columnMap) {
 				$rowSize > $columnMap[COL_CHANNEL_CTCSS_DCS_DECODE] ? $row[$columnMap[COL_CHANNEL_CTCSS_DCS_DECODE]] : NULL, //$ctcssDcsDecode
 				$rowSize > $columnMap[COL_CHANNEL_CTCSS_DCS_ENCODE] ? $row[$columnMap[COL_CHANNEL_CTCSS_DCS_ENCODE]] : NULL, //$ctcssDcsEncode
 				$rowSize > $columnMap[COL_CHANNEL_TX_SIGNALING_SYSTEM] ? $row[$columnMap[COL_CHANNEL_TX_SIGNALING_SYSTEM]] : NULL, //$txSignalingSystem
-				$rowSize > $columnMap[COL_CHANNEL_RX_SIGNALING_SYSTEM] ? $row[$columnMap[COL_CHANNEL_RX_SIGNALING_SYSTEM]] : NULL //$rxSignalingSystem
+				$rowSize > $columnMap[COL_CHANNEL_RX_SIGNALING_SYSTEM] ? $row[$columnMap[COL_CHANNEL_RX_SIGNALING_SYSTEM]] : NULL, //$rxSignalingSystem
+				NULL,
+				NULL,
+				$rowSize > $columnMap[COL_CHANNEL_CHANNEL_SWITCH_SQUELCH_MODE] ? $row[$columnMap[COL_CHANNEL_CHANNEL_SWITCH_SQUELCH_MODE]] : NULL, //$channelSwitchSquelchMode
+				$rowSize > $columnMap[COL_CHANNEL_MONITOR_SQUELCH_MODE] ? $row[$columnMap[COL_CHANNEL_MONITOR_SQUELCH_MODE]] : NULL, //$monitorSquelchMode
+				$rowSize > $columnMap[COL_CHANNEL_RX_TONE_TYPE] ? $row[$columnMap[COL_CHANNEL_RX_TONE_TYPE]] : NULL, //$rxToneType
+				$rowSize > $columnMap[COL_CHANNEL_TX_TONE_TYPE] ? $row[$columnMap[COL_CHANNEL_TX_TONE_TYPE]] : NULL, //$txToneType
+				$rowSize > $columnMap[COL_CHANNEL_RX_SQUELCH_MODE] ? $row[$columnMap[COL_CHANNEL_RX_SQUELCH_MODE]] : NULL //$rxSquelchMode
 				);
 		if (strlen($channel->getChannelName()) > 16) {
 			addError("Channel name too long: ".$channel->getChannelName());
@@ -820,6 +832,11 @@ function getChannelAttributeByColumnName(&$channel, &$colName, &$scanListArr) {
 		case COL_CHANNEL_TX_REF_FREQ: return $channel->getTxRefFrequency();
 		case COL_CHANNEL_TX_SIGNALING_SYSTEM: return $channel->getTxSignalingSystem();
 		case COL_CHANNEL_VOX: return $channel->isVox() ? 'On' : 'Off';
+		case COL_CHANNEL_CHANNEL_SWITCH_SQUELCH_MODE: return $channel->getChannelSwitchSquelchMode();
+		case COL_CHANNEL_MONITOR_SQUELCH_MODE: return $channel->getMonitorSquelchMode();
+		case COL_CHANNEL_RX_TONE_TYPE: return $channel->getRxToneType();
+		case COL_CHANNEL_TX_TONE_TYPE: return $channel->getTxToneType();
+		case COL_CHANNEL_RX_SQUELCH_MODE: return $channel->getRxSquelchMode();
 	}
 	return NULL;
 }

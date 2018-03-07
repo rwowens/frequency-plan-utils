@@ -35,6 +35,10 @@ class Channel {
 	private $rxSignalingSystem;
 	private $impScanListIdx;
 	private $originalIndex;
+	private $channelSwitchSquelchMode;
+	private $rxToneType;
+	private $txToneType;
+	private $rxSquelchMode;
 
 	public function __construct(
 			$channelName,
@@ -71,7 +75,12 @@ class Channel {
 			$txSignalingSystem,
 			$rxSignalingSystem,
 			$impScanListIdx = NULL,
-			$originalIndex = NULL
+			$originalIndex = NULL,
+			$channelSwitchSquelchMode = 'RX Squelch Mode',
+			$monitorSquelchMode = 'Carrier',
+			$rxToneType = 'None',
+			$txToneType = 'None',
+			$rxSquelchMode = 'Carrier'
 			) {
 				$this->admitCriteria = $admitCriteria;
 				$this->bandwidth = $bandwidth;
@@ -135,6 +144,11 @@ class Channel {
 				}
 				$this->impScanListIdx = $impScanListIdx;
 				$this->originalIndex = $originalIndex;
+				$this->channelSwitchSquelchMode = $channelSwitchSquelchMode;
+				$this->monitorSquelchMode = $monitorSquelchMode;
+				$this->rxToneType = $rxToneType;
+				$this->txToneType = $txToneType;
+				$this->rxSquelchMode = $rxSquelchMode;
 	}
 
 	public function getChannelName() { return $this->channelName; }
@@ -172,5 +186,10 @@ class Channel {
 	public function getRxSignalingSystem() { return $this->rxSignalingSystem; }
 	public function getImportScanListIndex() { return $this->impScanListIdx; }
 	public function getOriginalIndex() { return $this->originalIndex; }
+	public function getChannelSwitchSquelchMode() { return $this->channelSwitchSquelchMode; }
+	public function getMonitorSquelchMode() { return $this->monitorSquelchMode; }
+	public function getRxToneType() { return $this->rxToneType; }
+	public function getTxToneType() { return $this->txToneType; }
+	public function getRxSquelchMode() { return $this->rxSquelchMode; }
 }
 ?>
