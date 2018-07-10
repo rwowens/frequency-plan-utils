@@ -756,7 +756,7 @@ function convertBCDToFrequency($bcd) {
 	$result = $result . (($bcd >> 28) & 0x0F) . (($bcd >> 24) & 0x0F);
 	$result = $result . (($bcd >> 20) & 0x0F) . '.' . (($bcd >> 16) & 0x0F);
 	$result = $result . (($bcd >> 12) & 0x0F) . (($bcd >> 8) & 0x0F);
-	$result = $result . ($bcd & 0x0F) . (($bcd >> 4) & 0x0F);
+	$result = $result . (($bcd >> 4) & 0x0F) . ($bcd & 0x0F);
 	return $result;
 }
 
