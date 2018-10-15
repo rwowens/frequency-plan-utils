@@ -1,5 +1,6 @@
 <?php
 use RadioModels\CS800FileUtils;
+use RadioModels\AnytoneZipFileUtils;
 
 require_once __DIR__ . '/includes/utils.php';
 require_once __DIR__ . '/includes/spreadsheetFunctions.php';
@@ -23,6 +24,10 @@ if ($baseDocId == null) {
 		$cs800FileUtils = new CS800FileUtils();
 		$outputFile = $cs800FileUtils->generateRadioFile($baseDocId, $importDocId);
 		$sendFileName = 'ares_custom.rdb';
+	} else if ($radioModel == 'anytonezip') {
+		$anytoneZipFileUtils = new AnytoneZipFileUtils();
+		$outputFile = $anytoneZipFileUtils->generateRadioFile($baseDocId, $importDocId);
+		$sendFileName = 'ares_custom.zip';
 	}
 }
 $ackHash = calculateAckHash();

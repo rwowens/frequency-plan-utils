@@ -33,6 +33,7 @@ require('fragments/header.php');
 				<select name="radioModel" id="radioModel" class="form-control">
 					<option value="tyt">TYT MD-380</option>
 					<option value="cs800">CS-800</option>
+					<option value="anytonezip">Anytone Zip</option>
 				</select>
 			</div>
 			<div class="form-group col-sm-12">

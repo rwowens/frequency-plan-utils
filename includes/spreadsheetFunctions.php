@@ -505,10 +505,10 @@ function processChannelRows(&$channelArr, $values, &$columnMap) {
 		if (!is_numeric($channel->getTotRekeyDelay()) || $channel->getTotRekeyDelay() < 0 || $channel->getTotRekeyDelay() > 255) {
 			addError("Invalid TOT setting for channel ".$channel->getChannelName().': '.$channel->getTot());
 		}
-		if (!is_numeric($channel->getRxFrequency()) || $channel->getRxFrequency() < 400.0 || $channel->getRxFrequency() > 480.0) {
+		if (!is_numeric($channel->getRxFrequency()) || $channel->getRxFrequency() < 140.0 || $channel->getRxFrequency() > 480.0) {
 			addError("Invalid rx frequency setting for channel ".$channel->getChannelName().': '.$channel->getRxFrequency());
 		}
-		if (!is_numeric($channel->getTxFrequency()) || $channel->getTxFrequency() < 400.0 || $channel->getTxFrequency() > 480.0) {
+		if (!is_numeric($channel->getTxFrequency()) || $channel->getTxFrequency() < 140.0 || $channel->getTxFrequency() > 480.0) {
 			addError("Invalid tx frequency setting for channel ".$channel->getChannelName().': '.$channel->getTxFrequency());
 		}
 		if ($channel->getMode() == 'Digital') {
